@@ -1,8 +1,8 @@
-codebird-php
-============
-*A Twitter library in PHP.*
+shapeways-php
+=============
+*A Shapeways API library in PHP.*
 
-Copyright (C) 2010-2014 Jublo IT Solutions &lt;support@jublo.net&gt;
+Copyright (C) 2014 Jublo IT Solutions <support@jublo.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ### Versions
 
-- JavaScript: https://github.com/jublonet/codebird-js
-- PHP: https://github.com/jublonet/codebird-php
+- PHP: https://github.com/jublonet/shapeways-php
 
 ### Requirements
 

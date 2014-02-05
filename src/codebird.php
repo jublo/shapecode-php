@@ -3,12 +3,12 @@
 namespace Codebird;
 
 /**
- * A Twitter library in PHP.
+ * A Shapeways API client in PHP.
  *
- * @package codebird
- * @version 2.5.0-dev
- * @author Jublo IT Solutions &lt;support@jublo.net&gt;
- * @copyright 2010-2014 Jublo IT Solutions &lt;support@jublo.net&gt;
+ * @package shapeways
+ * @version 1.0.0-dev
+ * @author Jublo IT Solutions <support@jublo.net>
+ * @copyright 2014 Jublo IT Solutions <support@jublo.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ class Codebird
     /**
      * The current Codebird version
      */
-    protected $_version = '2.5.0-dev';
+    protected $_version = '1.0.0-dev';
 
     /**
      * Request timeout

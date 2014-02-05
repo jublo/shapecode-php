@@ -1,7 +1,7 @@
 {
-    "name": "jublonet/codebird-php",
-    "description" : "A Twitter library in PHP.",
-    "version": "2.5.0-dev",
+    "name": "jublonet/shapeways-php",
+    "description" : "A Shapeways API library in PHP.",
+    "version": "1.0.0-dev",
     "autoload": {
         "classmap": ["src/"]
     },

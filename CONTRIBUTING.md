@@ -8,4 +8,4 @@
 The styleguide is also available online at http://pear.php.net/manual/en/standards.php.
 
 ### License
-- Code contributed by you will get the same license as Codebird itself, that is, GPU General Public License V3.
+- Code contributed by you will get the same license as Shapeways-PHP itself, that is, GPU General Public License V3.
