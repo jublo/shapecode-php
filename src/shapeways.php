@@ -68,11 +68,6 @@ class Shapeways
     protected static $_oauth_consumer_secret = null;
 
     /**
-     * The app-only bearer token. Used to authorize app-only requests
-     */
-    protected static $_oauth_bearer_token = null;
-
-    /**
      * The API endpoint to use
      */
     protected static $_endpoint = 'https://api.twitter.com/1.1/';
@@ -146,19 +141,7 @@ class Shapeways
     }
 
     /**
-     * Sets the OAuth2 app-only auth bearer token
-     *
-     * @param string $token OAuth2 bearer token
-     *
-     * @return void
-     */
-    public static function setBearerToken($token)
-    {
-        self::$_oauth_bearer_token = $token;
-    }
-
-    /**
-     * Gets the current Codebird version
+     * Gets the current Shapeways version
      *
      * @return string The version number
      */
@@ -422,11 +405,6 @@ class Shapeways
             }
         }
 
-        $app_only_auth = false;
-        if (count($params) > 1) {
-            $app_only_auth = !! $params[1];
-        }
-
         // map function name to API method
         $method = '';
 
@@ -481,8 +459,7 @@ class Shapeways
             $method,
             $method_template,
             $apiparams,
-            $multipart,
-            $app_only_auth
+            $multipart
         );
     }
 
@@ -528,82 +505,6 @@ class Shapeways
             $url .= "&screen_name=" . $screen_name;
         }
         return $url;
-    }
-
-    /**
-     * Gets the OAuth bearer token
-     *
-     * @return string The OAuth bearer token
-     */
-
-    public function oauth2_token()
-    {
-        if (! function_exists('curl_init')) {
-            throw new Exception('To make API requests, the PHP curl extension must be available.');
-        }
-        if (self::$_oauth_consumer_key == null) {
-            throw new Exception('To obtain a bearer token, the consumer key must be set.');
-        }
-        $ch  = false;
-        $post_fields = array(
-            'grant_type' => 'client_credentials'
-        );
-        $url = self::$_endpoint_oauth . 'oauth2/token';
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem');
-
-        curl_setopt($ch, CURLOPT_USERPWD, self::$_oauth_consumer_key . ':' . self::$_oauth_consumer_secret);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Expect:'
-        ));
-        $reply = curl_exec($ch);
-
-        // certificate validation results
-        $validation_result = curl_errno($ch);
-        if (in_array(
-                $validation_result,
-                array(
-                    CURLE_SSL_CERTPROBLEM,
-                    CURLE_SSL_CACERT,
-                    CURLE_SSL_CACERT_BADFILE,
-                    CURLE_SSL_CRL_BADFILE,
-                    CURLE_SSL_ISSUER_ERROR
-                )
-            )
-        ) {
-            throw new Exception('Error ' . $validation_result . ' while validating the Twitter API certificate.');
-        }
-
-        $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $reply = $this->_parseApiReply('oauth2/token', $reply);
-        switch ($this->_return_format) {
-            case CODEBIRD_RETURNFORMAT_ARRAY:
-                $reply['httpstatus'] = $httpstatus;
-                if ($httpstatus == 200) {
-                    self::setBearerToken($reply['access_token']);
-                }
-                break;
-            case CODEBIRD_RETURNFORMAT_JSON:
-                if ($httpstatus == 200) {
-                    $parsed = json_decode($reply);
-                    self::setBearerToken($parsed->access_token);
-                }
-                break;
-            case CODEBIRD_RETURNFORMAT_OBJECT:
-                $reply->httpstatus = $httpstatus;
-                if ($httpstatus == 200) {
-                    self::setBearerToken($reply->access_token);
-                }
-                break;
-        }
-        return $reply;
     }
 
     /**
@@ -888,12 +789,11 @@ class Shapeways
      * @param string          $method_template The templated API method to call
      * @param array  optional $params          The parameters to send along
      * @param bool   optional $multipart       Whether to use multipart/form-data
-     * @param bool   optional $app_only_auth   Whether to use app-only bearer authentication
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApi($httpmethod, $method, $method_template, $params = array(), $multipart = false, $app_only_auth = false)
+    protected function _callApi($httpmethod, $method, $method_template, $params = array(), $multipart = false)
     {
         if (! function_exists('curl_init')) {
             throw new Exception('To make API requests, the PHP curl extension must be available.');
@@ -918,16 +818,6 @@ class Shapeways
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-        }
-        if ($app_only_auth) {
-            if (self::$_oauth_consumer_key == null) {
-                throw new Exception('To make an app-only auth API request, the consumer key must be set.');
-            }
-            // automatically fetch bearer token, if necessary
-            if (self::$_oauth_bearer_token == null) {
-                $this->oauth2_token();
-            }
-            $authorization = 'Authorization: Bearer ' . self::$_oauth_bearer_token;
         }
         $request_headers = array();
         if (isset($authorization)) {
