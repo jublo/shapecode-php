@@ -1,8 +1,8 @@
-codebird-php
-============
-*A Twitter library in PHP.*
+shapeways-php
+=============
+*A Shapeways API library in PHP.*
 
-Copyright (C) 2010-2014 Jublo IT Solutions &lt;support@jublo.net&gt;
+Copyright (C) 2014 Jublo IT Solutions <support@jublo.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ### Versions
 
-- JavaScript: https://github.com/jublonet/codebird-js
-- PHP: https://github.com/jublonet/codebird-php
+- PHP: https://github.com/jublonet/shapeways-php
 
 ### Requirements
 
@@ -32,14 +31,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 1. Authentication
 -----------------
 
-To authenticate your API requests on behalf of a certain Twitter user
+To authenticate your API requests on behalf of a certain Shapeways user
 (following OAuth 1.0a), take a look at these steps:
 
 ```php
-require_once ('codebird.php');
-\Codebird\Codebird::setConsumerKey('YOURKEY', 'YOURSECRET'); // static, see 'Using multiple Codebird instances'
+require_once ('shapeways.php');
+Shapeways::setConsumerKey('YOURKEY', 'YOURSECRET'); // static, see 'Using multiple Shapeways instances'
 
-$cb = \Codebird\Codebird::getInstance();
+$cb = Shapeways::getInstance();
 ```
 
 You may either set the OAuth token and secret, if you already have them:
@@ -109,9 +108,9 @@ I strongly recommend that you store the obtained bearer token in your database.
 There is no need to re-obtain the token with each page load, as it becomes invalid
 only when you call the ```oauth2/invalidate_token``` method.
 
-If you already have your token, tell Codebird to use it:
+If you already have your token, tell Shapeways to use it:
 ```php
-\Codebird\Codebird::setBearerToken('YOURBEARERTOKEN');
+Shapeways::setBearerToken('YOURBEARERTOKEN');
 ```
 
 For sending an API request with app-only auth, see the ‘Usage examples’ section.
@@ -135,7 +134,7 @@ Tweeting is as easy as this:
 $reply = $cb->statuses_update('status=Whohoo, I just tweeted!');
 ```
 
-For more complex parameters (see the [Twitter API documentation](https://dev.twitter.com/)),
+For more complex parameters (see the [Shapeways API documentation](https://developers.shapeways.com/)),
 giving all parameters in an array is supported, too:
 
 ```php
@@ -145,7 +144,7 @@ $params = array(
 $reply = $cb->users_show($params);
 ```
 
-When **uploading files to Twitter**, the array syntax is obligatory:
+When **uploading files to Shapeways**, the array syntax is obligatory:
 
 ```php
 $params = array(
@@ -161,38 +160,38 @@ To send API requests without an access token for a user (app-only auth),
 add a second parameter to your method call, like this:
 
 ```php
-$reply = $cb->search_tweets('q=Twitter', true);
+$reply = $cb->search_tweets('q=Shapeways', true);
 ```
 
 Bear in mind that not all API methods support application-only auth.
 
-3. Mapping API methods to Codebird function calls
--------------------------------------------------
+3. Mapping API methods to Shapeways function calls
+--------------------------------------------------
 
-As you can see from the last example, there is a general way how Twitter’s API methods
-map to Codebird function calls. The general rules are:
+As you can see from the last example, there is a general way how the Shapeways
+API methods map to Shapeways function calls. The general rules are:
 
-1. For each slash in a Twitter API method, use an underscore in the Codebird function.
+1. For each slash in a Shapeways API method, use an underscore in the Shapeways function.
 
-    Example: ```statuses/update``` maps to ```Codebird::statuses_update()```.
+    Example: ```statuses/update``` maps to ```Shapeways::statuses_update()```.
 
-2. For each underscore in a Twitter API method, use camelCase in the Codebird function.
+2. For each underscore in a Shapeways API method, use camelCase in the Shapeways function.
 
-    Example: ```statuses/home_timeline``` maps to ```Codebird::statuses_homeTimeline()```.
+    Example: ```statuses/home_timeline``` maps to ```Shapeways::statuses_homeTimeline()```.
 
-3. For each parameter template in method, use UPPERCASE in the Codebird function.
+3. For each parameter template in method, use UPPERCASE in the Shapeways function.
     Also don’t forget to include the parameter in your parameter list.
 
     Examples:
-    - ```statuses/show/:id``` maps to ```Codebird::statuses_show_ID('id=12345')```.
+    - ```statuses/show/:id``` maps to ```Shapeways::statuses_show_ID('id=12345')```.
     - ```users/profile_image/:screen_name``` maps to
-      ```Codebird::users_profileImage_SCREEN_NAME('screen_name=jublonet')```.
+      ```Shapeways::users_profileImage_SCREEN_NAME('screen_name=jublonet')```.
 
 4. HTTP methods (GET, POST, DELETE etc.)
 ----------------------------------------
 
-Never care about which HTTP method (verb) to use when calling a Twitter API.
-Codebird is intelligent enough to find out on its own.
+Never care about which HTTP method (verb) to use when calling a Shapeways API.
+Shapeways is intelligent enough to find out on its own.
 
 5. Response codes
 -----------------
@@ -202,11 +201,11 @@ You can find it within the return object’s ```httpstatus``` property.
 
 ### 5.1 Dealing with rate-limits
 
-Basically, Codebird leaves it up to you to handle Twitter’s rate limit.
+Basically, Shapeways leaves it up to you to handle the Shapeways rate limit.
 The library returns the response HTTP status code, so you can detect rate limits.
 
 I suggest you to check if the ```$reply->httpstatus``` property is ```400```
-and check with the Twitter API to find out if you are currently being
+and check with the Shapeways API to find out if you are currently being
 rate-limited.
 See the [Rate Limiting FAQ](https://dev.twitter.com/docs/rate-limiting-faq)
 for more information.
@@ -228,7 +227,7 @@ Upon your choice, you may also get PHP arrays directly:
 $cb->setReturnFormat(CODEBIRD_RETURNFORMAT_ARRAY);
 ```
 
-The Twitter API natively responds to API calls in JSON (JS Object Notation).
+The Shapeways API natively responds to API calls in JSON (JS Object Notation).
 To get a JSON string, set the corresponding return format:
 
 ```php
@@ -237,29 +236,29 @@ $cb->setReturnFormat(CODEBIRD_RETURNFORMAT_JSON);
 
 Support for getting a SimpleXML object is planned.
 
-7. Using multiple Codebird instances
+7. Using multiple Shapeways instances
 ------------------------------------
 
-By default, Codebird works with just one instance. This programming paradigma is
+By default, Shapeways works with just one instance. This programming paradigma is
 called a *singleton*.
 
-Getting the main Codebird object is done like this:
+Getting the main Shapeways object is done like this:
 
 ```php
-$cb = \Codebird\Codebird::getInstance();
+$cb = Shapeways::getInstance();
 ```
 
-If you need to run requests to the Twitter API for multiple users at once,
-Codebird supports this as well. Instead of getting the instance like shown above,
+If you need to run requests to the Shapeways API for multiple users at once,
+Shapeways supports this as well. Instead of getting the instance like shown above,
 create a new object:
 
 ```php
-$cb1 = new \Codebird\Codebird;
-$cb2 = new \Codebird\Codebird;
+$cb1 = new Shapeways;
+$cb2 = new Shapeways;
 ```
 
 Please note that your OAuth consumer key and secret is shared within
-multiple Codebird instances, while the OAuth request and access tokens with their
+multiple Shapeways instances, while the OAuth request and access tokens with their
 secrets are *not* shared.
 
 How Do I…?
@@ -309,7 +308,7 @@ stdClass Object
 If you need to get more details, such as the user’s latest tweet,
 you should fetch the complete User Entity.  The simplest way to get the
 user entity of the currently authenticated user is to use the
-```account/verify_credentials``` API method.  In Codebird, it works like this:
+```account/verify_credentials``` API method.  In Shapeways, it works like this:
 
 ```php
 $reply = $cb->account_verifyCredentials();
@@ -327,7 +326,7 @@ large result sets. Cursoring separates results into pages of no more than
 5000 results at a time, and provides a means to move backwards and
 forwards through these pages.
 
-Here is how you can walk through cursored results with Codebird.
+Here is how you can walk through cursored results with Shapeways.
 
 1. Get the first result set of a cursored method:
 ```php
@@ -353,10 +352,10 @@ It might make sense to use the cursors in a loop.  Watch out, though,
 not to send more than the allowed number of requests to ```followers/list```
 per rate-limit timeframe, or else you will hit your rate-limit.
 
-…use xAuth with Codebird?
+…use xAuth with Shapeways?
 -------------------------
 
-Codebird supports xAuth just like every other authentication used at Twitter.
+Shapeways supports xAuth just like every other authentication used at Twitter.
 Remember that your application needs to be whitelisted to be able to use xAuth.
 
 Here’s an example:
@@ -392,17 +391,17 @@ on twitter.com and use that to complete signing in to the application.
 …know what cacert.pem is for?
 -----------------------------
 
-Connections to the Twitter API are done over a secured SSL connection.
-Since 2.4.0, codebird-php checks if the Twitter API server has a valid
-SSL certificate. Valid certificates have a correct signature-chain.
+Connections to the Shapeways API are done over a secured SSL connection.
+Shapeways-php checks if the Shapeways API server has a valid SSL certificate.
+Valid certificates have a correct signature-chain.
 The cacert.pem file contains a list of all public certificates for root
 certificate authorities. You can find more information about this file
 at http://curl.haxx.se/docs/caextract.html.
 
-…set the timeout for requests to the Twitter API?
+…set the timeout for requests to the Shapeways API?
 -------------------------------------------------
 
-For connecting to Twitter, Codebird uses the cURL library.
+For connecting to Shapeways, Shapeways uses the cURL library.
 You can specify both the connection timeout and the request timeout,
 in milliseconds:
 
