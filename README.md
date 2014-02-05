@@ -31,11 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 1. Authentication
 -----------------
 
-To authenticate your API requests on behalf of a certain Twitter user
+To authenticate your API requests on behalf of a certain Shapeways user
 (following OAuth 1.0a), take a look at these steps:
 
 ```php
-require_once ('codebird.php');
+require_once ('shapeways.php');
 \Codebird\Codebird::setConsumerKey('YOURKEY', 'YOURSECRET'); // static, see 'Using multiple Codebird instances'
 
 $cb = \Codebird\Codebird::getInstance();
