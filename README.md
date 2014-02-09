@@ -1,4 +1,4 @@
-shapeways-php
+shapecode-php
 =============
 *A Shapeways API library in PHP.*
 
@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ### Versions
 
-- PHP: https://github.com/jublonet/shapeways-php
+- PHP: https://github.com/jublonet/shapecode-php
 
 ### Requirements
 
@@ -35,10 +35,10 @@ To authenticate your API requests on behalf of a certain Shapeways user
 (following OAuth 1.0a), take a look at these steps:
 
 ```php
-require_once ('shapeways.php');
-Shapeways::setConsumerKey('YOURKEY', 'YOURSECRET'); // static, see 'Using multiple Shapeways instances'
+require_once ('shapecode.php');
+Shapecode::setConsumerKey('YOURKEY', 'YOURSECRET'); // static, see 'Using multiple Shapecode instances'
 
-$cb = Shapeways::getInstance();
+$cb = Shapecode::getInstance();
 ```
 
 You may either set the OAuth token and secret, if you already have them:
@@ -129,33 +129,33 @@ $params = array(
 $reply = $cb->statuses_updateWithMedia($params);
 ```
 
-3. Mapping API methods to Shapeways function calls
+3. Mapping API methods to Shapecode function calls
 --------------------------------------------------
 
 As you can see from the last example, there is a general way how the Shapeways
-API methods map to Shapeways function calls. The general rules are:
+API methods map to Shapecode function calls. The general rules are:
 
-1. For each slash in a Shapeways API method, use an underscore in the Shapeways function.
+1. For each slash in a Shapeways API method, use an underscore in the Shapecode function.
 
-    Example: ```statuses/update``` maps to ```Shapeways::statuses_update()```.
+    Example: ```statuses/update``` maps to ```Shapecode::statuses_update()```.
 
-2. For each underscore in a Shapeways API method, use camelCase in the Shapeways function.
+2. For each underscore in a Shapeways API method, use camelCase in the Shapecode function.
 
-    Example: ```statuses/home_timeline``` maps to ```Shapeways::statuses_homeTimeline()```.
+    Example: ```statuses/home_timeline``` maps to ```Shapecode::statuses_homeTimeline()```.
 
-3. For each parameter template in method, use UPPERCASE in the Shapeways function.
+3. For each parameter template in method, use UPPERCASE in the Shapecode function.
     Also don’t forget to include the parameter in your parameter list.
 
     Examples:
-    - ```statuses/show/:id``` maps to ```Shapeways::statuses_show_ID('id=12345')```.
+    - ```statuses/show/:id``` maps to ```Shapecode::statuses_show_ID('id=12345')```.
     - ```users/profile_image/:screen_name``` maps to
-      ```Shapeways::users_profileImage_SCREEN_NAME('screen_name=jublonet')```.
+      ```Shapecode::users_profileImage_SCREEN_NAME('screen_name=jublonet')```.
 
 4. HTTP methods (GET, POST, DELETE etc.)
 ----------------------------------------
 
 Never care about which HTTP method (verb) to use when calling a Shapeways API.
-Shapeways is intelligent enough to find out on its own.
+Shapecode is intelligent enough to find out on its own.
 
 5. Response codes
 -----------------
@@ -165,7 +165,7 @@ You can find it within the return object’s ```httpstatus``` property.
 
 ### 5.1 Dealing with rate-limits
 
-Basically, Shapeways leaves it up to you to handle the Shapeways rate limit.
+Basically, Shapecode leaves it up to you to handle the Shapeways rate limit.
 The library returns the response HTTP status code, so you can detect rate limits.
 
 I suggest you to check if the ```$reply->httpstatus``` property is ```400```
@@ -200,29 +200,29 @@ $cb->setReturnFormat(CODEBIRD_RETURNFORMAT_JSON);
 
 Support for getting a SimpleXML object is planned.
 
-7. Using multiple Shapeways instances
+7. Using multiple Shapecode instances
 ------------------------------------
 
-By default, Shapeways works with just one instance. This programming paradigma is
+By default, Shapecode works with just one instance. This programming paradigma is
 called a *singleton*.
 
-Getting the main Shapeways object is done like this:
+Getting the main Shapecode object is done like this:
 
 ```php
-$cb = Shapeways::getInstance();
+$cb = Shapecode::getInstance();
 ```
 
 If you need to run requests to the Shapeways API for multiple users at once,
-Shapeways supports this as well. Instead of getting the instance like shown above,
+Shapecode supports this as well. Instead of getting the instance like shown above,
 create a new object:
 
 ```php
-$cb1 = new Shapeways;
-$cb2 = new Shapeways;
+$cb1 = new Shapecode;
+$cb2 = new Shapecode;
 ```
 
 Please note that your OAuth consumer key and secret is shared within
-multiple Shapeways instances, while the OAuth request and access tokens with their
+multiple Shapecode instances, while the OAuth request and access tokens with their
 secrets are *not* shared.
 
 How Do I…?
@@ -272,7 +272,7 @@ stdClass Object
 If you need to get more details, such as the user’s latest tweet,
 you should fetch the complete User Entity.  The simplest way to get the
 user entity of the currently authenticated user is to use the
-```account/verify_credentials``` API method.  In Shapeways, it works like this:
+```account/verify_credentials``` API method.  In Shapecode, it works like this:
 
 ```php
 $reply = $cb->account_verifyCredentials();
@@ -290,7 +290,7 @@ large result sets. Cursoring separates results into pages of no more than
 5000 results at a time, and provides a means to move backwards and
 forwards through these pages.
 
-Here is how you can walk through cursored results with Shapeways.
+Here is how you can walk through cursored results with Shapecode.
 
 1. Get the first result set of a cursored method:
 ```php
@@ -316,10 +316,10 @@ It might make sense to use the cursors in a loop.  Watch out, though,
 not to send more than the allowed number of requests to ```followers/list```
 per rate-limit timeframe, or else you will hit your rate-limit.
 
-…use xAuth with Shapeways?
+…use xAuth with Shapecode?
 -------------------------
 
-Shapeways supports xAuth just like every other authentication used at Twitter.
+Shapecode supports xAuth just like every other authentication used at Twitter.
 Remember that your application needs to be whitelisted to be able to use xAuth.
 
 Here’s an example:
@@ -356,7 +356,7 @@ on twitter.com and use that to complete signing in to the application.
 -----------------------------
 
 Connections to the Shapeways API are done over a secured SSL connection.
-Shapeways-php checks if the Shapeways API server has a valid SSL certificate.
+Shapecode-php checks if the Shapeways API server has a valid SSL certificate.
 Valid certificates have a correct signature-chain.
 The cacert.pem file contains a list of all public certificates for root
 certificate authorities. You can find more information about this file
@@ -365,7 +365,7 @@ at http://curl.haxx.se/docs/caextract.html.
 …set the timeout for requests to the Shapeways API?
 -------------------------------------------------
 
-For connecting to Shapeways, Shapeways uses the cURL library.
+For connecting to Shapeways, Shapecode uses the cURL library.
 You can specify both the connection timeout and the request timeout,
 in milliseconds:
 

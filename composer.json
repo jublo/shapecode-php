@@ -1,5 +1,5 @@
 {
-    "name": "jublonet/shapeways-php",
+    "name": "jublonet/shapecode-php",
     "description" : "A Shapeways API library in PHP.",
     "version": "1.0.0-dev",
     "autoload": {
