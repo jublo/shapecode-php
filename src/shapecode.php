@@ -3,7 +3,7 @@
 /**
  * A Shapeways API client in PHP.
  *
- * @package shapeways
+ * @package shapecode
  * @version 1.0.0-dev
  * @author Jublo IT Solutions <support@jublo.net>
  * @copyright 2014 Jublo IT Solutions <support@jublo.net>
@@ -47,10 +47,10 @@ unset($id);
 /**
  * A Shapeways API client in PHP.
  *
- * @package shapeways
- * @subpackage shapeways-php
+ * @package shapecode
+ * @subpackage shapecode-php
  */
-class Shapeways
+class Shapecode
 {
     /**
      * The current singleton instance
