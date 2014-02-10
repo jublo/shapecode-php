@@ -27,7 +27,7 @@
  */
 $constants = explode(' ', 'OBJECT ARRAY JSON');
 foreach ($constants as $i => $id) {
-    $id = 'CODEBIRD_RETURNFORMAT_' . $id;
+    $id = 'SHAPECODE_RETURNFORMAT_' . $id;
     defined($id) or define($id, $i);
 }
 $constants = array(
@@ -90,7 +90,7 @@ class Shapecode
     /**
      * The format of data to return from API calls
      */
-    protected $_return_format = CODEBIRD_RETURNFORMAT_OBJECT;
+    protected $_return_format = SHAPECODE_RETURNFORMAT_OBJECT;
 
     /**
      * The file formats that Twitter accepts as image uploads
@@ -192,8 +192,8 @@ class Shapecode
      * Sets the format for API replies
      *
      * @param int $return_format One of these:
-     *                           CODEBIRD_RETURNFORMAT_OBJECT (default)
-     *                           CODEBIRD_RETURNFORMAT_ARRAY
+     *                           SHAPECODE_RETURNFORMAT_OBJECT (default)
+     *                           SHAPECODE_RETURNFORMAT_ARRAY
      *
      * @return void
      */
@@ -868,9 +868,9 @@ class Shapecode
 
         $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $reply = $this->_parseApiReply($method_template, $reply);
-        if ($this->_return_format == CODEBIRD_RETURNFORMAT_OBJECT) {
+        if ($this->_return_format == SHAPECODE_RETURNFORMAT_OBJECT) {
             $reply->httpstatus = $httpstatus;
-        } elseif ($this->_return_format == CODEBIRD_RETURNFORMAT_ARRAY) {
+        } elseif ($this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY) {
             $reply['httpstatus'] = $httpstatus;
         }
         return $reply;
@@ -917,14 +917,14 @@ class Shapecode
             $reply = '';
         }
 
-        $need_array = $this->_return_format == CODEBIRD_RETURNFORMAT_ARRAY;
+        $need_array = $this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY;
         if ($reply == '[]') {
             switch ($this->_return_format) {
-                case CODEBIRD_RETURNFORMAT_ARRAY:
+                case SHAPECODE_RETURNFORMAT_ARRAY:
                     return array();
-                case CODEBIRD_RETURNFORMAT_JSON:
+                case SHAPECODE_RETURNFORMAT_JSON:
                     return '{}';
-                case CODEBIRD_RETURNFORMAT_OBJECT:
+                case SHAPECODE_RETURNFORMAT_OBJECT:
                     return new stdClass;
             }
         }
@@ -955,11 +955,11 @@ class Shapecode
             $reply = json_encode($parsed);
         }
         switch ($this->_return_format) {
-            case CODEBIRD_RETURNFORMAT_ARRAY:
+            case SHAPECODE_RETURNFORMAT_ARRAY:
                 return $parsed;
-            case CODEBIRD_RETURNFORMAT_JSON:
+            case SHAPECODE_RETURNFORMAT_JSON:
                 return $reply;
-            case CODEBIRD_RETURNFORMAT_OBJECT:
+            case SHAPECODE_RETURNFORMAT_OBJECT:
                 return (object) $parsed;
         }
         return $parsed;
