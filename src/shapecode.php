@@ -737,7 +737,14 @@ class Shapecode
                     $reply = explode('&', $reply);
                     foreach ($reply as $element) {
                         if (stristr($element, '=')) {
-                            list($key, $value) = explode('=', $element);
+                            list($key, $value) = explode('=', $element, 2);
+                            $value = rawurldecode($value);
+                            // force SSL
+                            if ($key === 'authentication_url'
+                                && substr($value, 0, 7) === 'http://'
+                            ) {
+                                $value = 'https://' . substr($value, 7);
+                            }
                             $parsed[$key] = $value;
                         } else {
                             $parsed['message'] = $element;
