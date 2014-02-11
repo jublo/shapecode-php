@@ -746,6 +746,11 @@ class Shapecode
                                 $value = 'https://' . substr($value, 7);
                             }
                             $parsed[$key] = $value;
+                            // extract oauth token (API doesn't return separate param)
+                            $token_position = strpos($value, 'oauth_token=');
+                            if ($token_position > -1) {
+                                $parsed['oauth_token'] = substr($value, $token_position + 12);
+                            }
                         } else {
                             $parsed['message'] = $element;
                         }
