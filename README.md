@@ -38,12 +38,12 @@ To authenticate your API requests on behalf of a certain Shapeways user
 require_once ('shapecode.php');
 Shapecode::setConsumerKey('YOURKEY', 'YOURSECRET'); // static, see 'Using multiple Shapecode instances'
 
-$cb = Shapecode::getInstance();
+$sc = Shapecode::getInstance();
 ```
 
 You may either set the OAuth token and secret, if you already have them:
 ```php
-$cb->setToken('YOURTOKEN', 'YOURTOKENSECRET');
+$sc->setToken('YOURTOKEN', 'YOURTOKENSECRET');
 ```
 
 Or you authenticate, like this:
@@ -53,7 +53,7 @@ session_start();
 
 if (! isset($_SESSION['oauth_token'])) {
     // get the request token
-    $reply = $cb->oauth1_requestToken(array(
+    $reply = $sc->oauth1_requestToken(array(
         'oauth_callback' => 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
     ));
 
@@ -68,11 +68,11 @@ if (! isset($_SESSION['oauth_token'])) {
 
 } elseif (isset($_GET['oauth_verifier']) && isset($_SESSION['oauth_verify'])) {
     // verify the token
-    $cb->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
+    $sc->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
     unset($_SESSION['oauth_verify']);
 
     // get the access token
-    $reply = $cb->oauth1_accessToken(array(
+    $reply = $sc->oauth1_accessToken(array(
         'oauth_verifier' => $_GET['oauth_verifier']
     ));
 
@@ -86,7 +86,7 @@ if (! isset($_SESSION['oauth_token'])) {
 }
 
 // assign access token on each page load
-$cb->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
+$sc->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
 ```
 
 2. Usage examples
@@ -95,16 +95,16 @@ $cb->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
 When you have an access token, calling the API is simple:
 
 ```php
-$cb->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']); // see above
+$sc->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']); // see above
 
-$reply = (array) $cb->api();
+$reply = (array) $sc->api();
 print_r($reply);
 ```
 
 Tweeting is as easy as this:
 
 ```php
-$reply = $cb->statuses_update('status=Whohoo, I just tweeted!');
+$reply = $sc->statuses_update('status=Whohoo, I just tweeted!');
 ```
 
 For more complex parameters (see the [Shapeways API documentation](https://developers.shapeways.com/)),
@@ -114,7 +114,7 @@ giving all parameters in an array is supported, too:
 $params = array(
     'screen_name' => 'jublonet'
 );
-$reply = $cb->users_show($params);
+$reply = $sc->users_show($params);
 ```
 
 When **uploading files to Shapeways**, the array syntax is obligatory:
@@ -124,7 +124,7 @@ $params = array(
     'status' => 'Look at this crazy cat! #lolcats',
     'media[]' => '/home/jublonet/lolcats.jpg'
 );
-$reply = $cb->statuses_updateWithMedia($params);
+$reply = $sc->statuses_updateWithMedia($params);
 ```
 
 3. Mapping API methods to Shapecode function calls
@@ -179,7 +179,7 @@ For API methods returning multiple data (like ```statuses/home_timeline```),
 you should cast the reply to array, like this:
 
 ```php
-$reply = $cb->statuses_homeTimeline();
+$reply = $sc->statuses_homeTimeline();
 $data = (array) $reply;
 ```
 
@@ -207,7 +207,7 @@ called a *singleton*.
 Getting the main Shapecode object is done like this:
 
 ```php
-$cb = Shapecode::getInstance();
+$sc = Shapecode::getInstance();
 ```
 
 If you need to run requests to the Shapeways API for multiple users at once,
@@ -215,8 +215,8 @@ Shapecode supports this as well. Instead of getting the instance like shown abov
 create a new object:
 
 ```php
-$cb1 = new Shapecode;
-$cb2 = new Shapecode;
+$sc1 = new Shapecode;
+$sc2 = new Shapecode;
 ```
 
 Please note that your OAuth consumer key and secret is shared within
@@ -231,7 +231,7 @@ How Do I…?
 
 First retrieve the user object using
 
-```$reply = $cb->users_show("screen_name=$username");```
+```$reply = $sc->users_show("screen_name=$username");```
 
 
 with ```$username``` being the username of the account you wish to retrieve the profile image from.
@@ -273,7 +273,7 @@ user entity of the currently authenticated user is to use the
 ```account/verify_credentials``` API method.  In Shapecode, it works like this:
 
 ```php
-$reply = $cb->account_verifyCredentials();
+$reply = $sc->account_verifyCredentials();
 print_r($reply);
 ```
 
@@ -292,7 +292,7 @@ Here is how you can walk through cursored results with Shapecode.
 
 1. Get the first result set of a cursored method:
 ```php
-$result1 = $cb->followers_list();
+$result1 = $sc->followers_list();
 ```
 
 2. To navigate forth, take the ```next_cursor_str```:
@@ -303,7 +303,7 @@ $nextCursor = $result1->next_cursor_str;
 3. If ```$nextCursor``` is not 0, use this cursor to request the next result page:
 ```php
     if ($nextCursor > 0) {
-        $result2 = $cb->followers_list('cursor=' . $nextCursor);
+        $result2 = $sc->followers_list('cursor=' . $nextCursor);
     }
 ```
 
@@ -332,6 +332,6 @@ You can specify both the connection timeout and the request timeout,
 in milliseconds:
 
 ```php
-$cb->setConnectionTimeout(2000);
-$cb->setTimeout(5000);
+$sc->setConnectionTimeout(2000);
+$sc->setTimeout(5000);
 ```
