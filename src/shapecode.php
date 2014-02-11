@@ -93,12 +93,12 @@ class Shapecode
     protected $_return_format = SHAPECODE_RETURNFORMAT_OBJECT;
 
     /**
-     * The file formats that Twitter accepts as image uploads
+     * The file formats that Shapeways accepts as image uploads
      */
     protected $_supported_media_files = array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG);
 
     /**
-     * The current Codebird version
+     * The current Shapecode version
      */
     protected $_version = '1.0.0-dev';
 
@@ -116,7 +116,7 @@ class Shapecode
      * Returns singleton class instance
      * Always use this method unless you're working with multiple authenticated users at once
      *
-     * @return Codebird The instance
+     * @return Shapecode The instance
      */
     public static function getInstance()
     {
