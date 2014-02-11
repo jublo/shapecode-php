@@ -278,7 +278,7 @@ class Shapecode
             $method .= $path[$i];
         }
         // undo replacement for URL parameters
-        $url_parameters_with_underscore = array('screen_name');
+        $url_parameters_with_underscore = array();
         foreach ($url_parameters_with_underscore as $param) {
             $param = strtoupper($param);
             $replacement_was = str_replace('_', '/', $param);
@@ -504,7 +504,7 @@ class Shapecode
     {
         // multi-HTTP method endpoints
         switch($method) {
-            case 'account/settings':
+            case '_TODO_':
                 $method = count($params) > 0 ? $method . '__post' : $method;
                 break;
         }
@@ -528,13 +528,6 @@ class Shapecode
     protected function _detectMultipart($method)
     {
         $multiparts = array(
-            // Tweets
-            'statuses/update_with_media',
-
-            // Users
-            'account/update_profile_background_image',
-            'account/update_profile_image',
-            'account/update_profile_banner'
         );
         return in_array($method, $multiparts);
     }
@@ -557,12 +550,6 @@ class Shapecode
 
         // only check specific parameters
         $possible_files = array(
-            // Tweets
-            'statuses/update_with_media' => 'media[]',
-            // Accounts
-            'account/update_profile_background_image' => 'image',
-            'account/update_profile_image' => 'image',
-            'account/update_profile_banner' => 'banner'
         );
         // method might have files?
         if (! in_array($method, array_keys($possible_files))) {
@@ -607,12 +594,6 @@ class Shapecode
                         $value = $data;
                     }
                 }
-
-                /*
-                $multipart_request .=
-                    "\r\nContent-Transfer-Encoding: base64";
-                $value = base64_encode($value);
-                */
             }
 
             $multipart_request .=
