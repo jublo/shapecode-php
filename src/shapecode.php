@@ -70,12 +70,7 @@ class Shapecode
     /**
      * The API endpoint to use
      */
-    protected static $_endpoint = 'https://api.twitter.com/1.1/';
-
-    /**
-     * The API endpoint to use for OAuth requests
-     */
-    protected static $_endpoint_oauth = 'https://api.twitter.com/';
+    protected static $_endpoint = 'https://api.shapeways.com/%s/v1';
 
     /**
      * The Request or access token. Used to sign requests
@@ -571,10 +566,10 @@ class Shapecode
      */
     protected function _getEndpoint($method, $method_template)
     {
-        if (substr($method, 0, 5) == 'oauth') {
-            $url = self::$_endpoint_oauth . $method;
-        } else {
-            $url = self::$_endpoint . $method . '.json';
+        $url = sprintf(self::$_endpoint, $method);
+        // special trailing slash for this method
+        if ($method === 'api') {
+            $url .= '/';
         }
         return $url;
     }
