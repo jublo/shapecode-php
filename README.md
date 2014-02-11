@@ -53,19 +53,17 @@ session_start();
 
 if (! isset($_SESSION['oauth_token'])) {
     // get the request token
-    $reply = $cb->oauth_requestToken(array(
+    $reply = $cb->oauth1_requestToken(array(
         'oauth_callback' => 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
     ));
 
     // store the token
-    $cb->setToken($reply->oauth_token, $reply->oauth_token_secret);
     $_SESSION['oauth_token'] = $reply->oauth_token;
     $_SESSION['oauth_token_secret'] = $reply->oauth_token_secret;
     $_SESSION['oauth_verify'] = true;
 
     // redirect to auth website
-    $auth_url = $cb->oauth_authorize();
-    header('Location: ' . $auth_url);
+    header('Location: ' . $reply->authentication_url);
     die();
 
 } elseif (isset($_GET['oauth_verifier']) && isset($_SESSION['oauth_verify'])) {
@@ -74,7 +72,7 @@ if (! isset($_SESSION['oauth_token'])) {
     unset($_SESSION['oauth_verify']);
 
     // get the access token
-    $reply = $cb->oauth_accessToken(array(
+    $reply = $cb->oauth1_accessToken(array(
         'oauth_verifier' => $_GET['oauth_verifier']
     ));
 
@@ -99,7 +97,7 @@ When you have an access token, calling the API is simple:
 ```php
 $cb->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']); // see above
 
-$reply = (array) $cb->statuses_homeTimeline();
+$reply = (array) $cb->api();
 print_r($reply);
 ```
 
@@ -188,14 +186,14 @@ $data = (array) $reply;
 Upon your choice, you may also get PHP arrays directly:
 
 ```php
-$cb->setReturnFormat(CODEBIRD_RETURNFORMAT_ARRAY);
+$sc->setReturnFormat(SHAPECODE_RETURNFORMAT_ARRAY);
 ```
 
 The Shapeways API natively responds to API calls in JSON (JS Object Notation).
 To get a JSON string, set the corresponding return format:
 
 ```php
-$cb->setReturnFormat(CODEBIRD_RETURNFORMAT_JSON);
+$sc->setReturnFormat(SHAPECODE_RETURNFORMAT_JSON);
 ```
 
 Support for getting a SimpleXML object is planned.
@@ -251,7 +249,7 @@ For example:
 When the user returns from the authentication screen, you need to trade
 the obtained request token for an access token, using the OAuth verifier.
 As discussed in the section ‘Usage example,’ you use a call to
-```oauth/access_token``` to do that.
+```oauth1/access_token``` to do that.
 
 The API reply to this method call tells you details about the user that just logged in.
 These details contain the **user ID** and the **screen name.**
@@ -315,42 +313,6 @@ instead of ```next_cursor_str```.
 It might make sense to use the cursors in a loop.  Watch out, though,
 not to send more than the allowed number of requests to ```followers/list```
 per rate-limit timeframe, or else you will hit your rate-limit.
-
-…use xAuth with Shapecode?
--------------------------
-
-Shapecode supports xAuth just like every other authentication used at Twitter.
-Remember that your application needs to be whitelisted to be able to use xAuth.
-
-Here’s an example:
-```php
-$reply = $cb->oauth_accessToken(array(
-    'x_auth_username' => 'username',
-    'x_auth_password' => '4h3_p4$$w0rd',
-    'x_auth_mode' => 'client_auth'
-));
-```
-
-Are you getting a strange error message?  If the user is enrolled in
-login verification, the server will return a HTTP 401 error with a custom body.
-If you are using the send_error_codes parameter, you will receive the
-following error message in the response body:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<errors>
-<error code="231">User must verify login</error>
-</errors>
-```
-
-Otherwise, the response body will contain a plaintext response:
-```
-User must verify login
-```
-
-When this error occurs, advise the user to
-[generate a temporary password](https://twitter.com/settings/applications)
-on twitter.com and use that to complete signing in to the application.
 
 …know what cacert.pem is for?
 -----------------------------

@@ -27,7 +27,7 @@
  */
 $constants = explode(' ', 'OBJECT ARRAY JSON');
 foreach ($constants as $i => $id) {
-    $id = 'CODEBIRD_RETURNFORMAT_' . $id;
+    $id = 'SHAPECODE_RETURNFORMAT_' . $id;
     defined($id) or define($id, $i);
 }
 $constants = array(
@@ -70,12 +70,7 @@ class Shapecode
     /**
      * The API endpoint to use
      */
-    protected static $_endpoint = 'https://api.twitter.com/1.1/';
-
-    /**
-     * The API endpoint to use for OAuth requests
-     */
-    protected static $_endpoint_oauth = 'https://api.twitter.com/';
+    protected static $_endpoint = 'https://api.shapeways.com/%s/v1';
 
     /**
      * The Request or access token. Used to sign requests
@@ -90,15 +85,15 @@ class Shapecode
     /**
      * The format of data to return from API calls
      */
-    protected $_return_format = CODEBIRD_RETURNFORMAT_OBJECT;
+    protected $_return_format = SHAPECODE_RETURNFORMAT_OBJECT;
 
     /**
-     * The file formats that Twitter accepts as image uploads
+     * The file formats that Shapeways accepts as image uploads
      */
     protected $_supported_media_files = array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG);
 
     /**
-     * The current Codebird version
+     * The current Shapecode version
      */
     protected $_version = '1.0.0-dev';
 
@@ -116,7 +111,7 @@ class Shapecode
      * Returns singleton class instance
      * Always use this method unless you're working with multiple authenticated users at once
      *
-     * @return Codebird The instance
+     * @return Shapecode The instance
      */
     public static function getInstance()
     {
@@ -192,8 +187,8 @@ class Shapecode
      * Sets the format for API replies
      *
      * @param int $return_format One of these:
-     *                           CODEBIRD_RETURNFORMAT_OBJECT (default)
-     *                           CODEBIRD_RETURNFORMAT_ARRAY
+     *                           SHAPECODE_RETURNFORMAT_OBJECT (default)
+     *                           SHAPECODE_RETURNFORMAT_ARRAY
      *
      * @return void
      */
@@ -212,151 +207,12 @@ class Shapecode
     {
         static $apimethods = array(
             'GET' => array(
-                // Timelines
-                'statuses/mentions_timeline',
-                'statuses/user_timeline',
-                'statuses/home_timeline',
-                'statuses/retweets_of_me',
-
-                // Tweets
-                'statuses/retweets/:id',
-                'statuses/show/:id',
-                'statuses/oembed',
-
-                // Search
-                'search/tweets',
-
-                // Direct Messages
-                'direct_messages',
-                'direct_messages/sent',
-                'direct_messages/show',
-
-                // Friends & Followers
-                'friendships/no_retweets/ids',
-                'friends/ids',
-                'followers/ids',
-                'friendships/lookup',
-                'friendships/incoming',
-                'friendships/outgoing',
-                'friendships/show',
-                'friends/list',
-                'followers/list',
-
-                // Users
-                'account/settings',
-                'account/verify_credentials',
-                'blocks/list',
-                'blocks/ids',
-                'users/lookup',
-                'users/show',
-                'users/search',
-                'users/contributees',
-                'users/contributors',
-                'users/profile_banner',
-
-                // Suggested Users
-                'users/suggestions/:slug',
-                'users/suggestions',
-                'users/suggestions/:slug/members',
-
-                // Favorites
-                'favorites/list',
-
-                // Lists
-                'lists/list',
-                'lists/statuses',
-                'lists/memberships',
-                'lists/subscribers',
-                'lists/subscribers/show',
-                'lists/members/show',
-                'lists/members',
-                'lists/show',
-                'lists/subscriptions',
-
-                // Saved searches
-                'saved_searches/list',
-                'saved_searches/show/:id',
-
-                // Places & Geo
-                'geo/id/:place_id',
-                'geo/reverse_geocode',
-                'geo/search',
-                'geo/similar_places',
-
-                // Trends
-                'trends/place',
-                'trends/available',
-                'trends/closest',
-
-                // OAuth
-                'oauth/authenticate',
-                'oauth/authorize',
-
-                // Help
-                'help/configuration',
-                'help/languages',
-                'help/privacy',
-                'help/tos',
-                'application/rate_limit_status'
+                'api'
             ),
             'POST' => array(
-                // Tweets
-                'statuses/destroy/:id',
-                'statuses/update',
-                'statuses/retweet/:id',
-                'statuses/update_with_media',
-
-                // Direct Messages
-                'direct_messages/destroy',
-                'direct_messages/new',
-
-                // Friends & Followers
-                'friendships/create',
-                'friendships/destroy',
-                'friendships/update',
-
-                // Users
-                'account/settings__post',
-                'account/update_delivery_device',
-                'account/update_profile',
-                'account/update_profile_background_image',
-                'account/update_profile_colors',
-                'account/update_profile_image',
-                'blocks/create',
-                'blocks/destroy',
-                'account/update_profile_banner',
-                'account/remove_profile_banner',
-
-                // Favorites
-                'favorites/destroy',
-                'favorites/create',
-
-                // Lists
-                'lists/members/destroy',
-                'lists/subscribers/create',
-                'lists/subscribers/destroy',
-                'lists/members/create_all',
-                'lists/members/create',
-                'lists/destroy',
-                'lists/update',
-                'lists/create',
-                'lists/members/destroy_all',
-
-                // Saved Searches
-                'saved_searches/create',
-                'saved_searches/destroy/:id',
-
-                // Places & Geo
-                'geo/place',
-
-                // Spam Reporting
-                'users/report_spam',
-
                 // OAuth
-                'oauth/access_token',
-                'oauth/request_token',
-                'oauth2/token',
-                'oauth2/invalidate_token'
+                'oauth1/access_token',
+                'oauth1/request_token'
             )
         );
         return $apimethods;
@@ -417,7 +273,7 @@ class Shapecode
             $method .= $path[$i];
         }
         // undo replacement for URL parameters
-        $url_parameters_with_underscore = array('screen_name');
+        $url_parameters_with_underscore = array();
         foreach ($url_parameters_with_underscore as $param) {
             $param = strtoupper($param);
             $replacement_was = str_replace('_', '/', $param);
@@ -461,50 +317,6 @@ class Shapecode
             $apiparams,
             $multipart
         );
-    }
-
-    /**
-     * Uncommon API methods
-     */
-
-    /**
-     * Gets the OAuth authenticate URL for the current request token
-     *
-     * @return string The OAuth authenticate URL
-     */
-    public function oauth_authenticate($force_login = NULL, $screen_name = NULL)
-    {
-        if ($this->_oauth_token == null) {
-            throw new Exception('To get the authenticate URL, the OAuth token must be set.');
-        }
-        $url = self::$_endpoint_oauth . 'oauth/authenticate?oauth_token=' . $this->_url($this->_oauth_token);
-        if ($force_login) {
-            $url .= "&force_login=1";
-        }
-        if ($screen_name) {
-            $url .= "&screen_name=" . $screen_name;
-        }
-        return $url;
-    }
-
-    /**
-     * Gets the OAuth authorize URL for the current request token
-     *
-     * @return string The OAuth authorize URL
-     */
-    public function oauth_authorize($force_login = NULL, $screen_name = NULL)
-    {
-        if ($this->_oauth_token == null) {
-            throw new Exception('To get the authorize URL, the OAuth token must be set.');
-        }
-        $url = self::$_endpoint_oauth . 'oauth/authorize?oauth_token=' . $this->_url($this->_oauth_token);
-        if ($force_login) {
-            $url .= "&force_login=1";
-        }
-        if ($screen_name) {
-            $url .= "&screen_name=" . $screen_name;
-        }
-        return $url;
     }
 
     /**
@@ -643,7 +455,7 @@ class Shapecode
     {
         // multi-HTTP method endpoints
         switch($method) {
-            case 'account/settings':
+            case '_TODO_':
                 $method = count($params) > 0 ? $method . '__post' : $method;
                 break;
         }
@@ -667,13 +479,6 @@ class Shapecode
     protected function _detectMultipart($method)
     {
         $multiparts = array(
-            // Tweets
-            'statuses/update_with_media',
-
-            // Users
-            'account/update_profile_background_image',
-            'account/update_profile_image',
-            'account/update_profile_banner'
         );
         return in_array($method, $multiparts);
     }
@@ -696,12 +501,6 @@ class Shapecode
 
         // only check specific parameters
         $possible_files = array(
-            // Tweets
-            'statuses/update_with_media' => 'media[]',
-            // Accounts
-            'account/update_profile_background_image' => 'image',
-            'account/update_profile_image' => 'image',
-            'account/update_profile_banner' => 'banner'
         );
         // method might have files?
         if (! in_array($method, array_keys($possible_files))) {
@@ -746,12 +545,6 @@ class Shapecode
                         $value = $data;
                     }
                 }
-
-                /*
-                $multipart_request .=
-                    "\r\nContent-Transfer-Encoding: base64";
-                $value = base64_encode($value);
-                */
             }
 
             $multipart_request .=
@@ -773,10 +566,10 @@ class Shapecode
      */
     protected function _getEndpoint($method, $method_template)
     {
-        if (substr($method, 0, 5) == 'oauth') {
-            $url = self::$_endpoint_oauth . $method;
-        } else {
-            $url = self::$_endpoint . $method . '.json';
+        $url = sprintf(self::$_endpoint, $method);
+        // special trailing slash for this method
+        if ($method === 'api') {
+            $url .= '/';
         }
         return $url;
     }
@@ -868,9 +661,9 @@ class Shapecode
 
         $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $reply = $this->_parseApiReply($method_template, $reply);
-        if ($this->_return_format == CODEBIRD_RETURNFORMAT_OBJECT) {
+        if ($this->_return_format == SHAPECODE_RETURNFORMAT_OBJECT) {
             $reply->httpstatus = $httpstatus;
-        } elseif ($this->_return_format == CODEBIRD_RETURNFORMAT_ARRAY) {
+        } elseif ($this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY) {
             $reply['httpstatus'] = $httpstatus;
         }
         return $reply;
@@ -917,14 +710,14 @@ class Shapecode
             $reply = '';
         }
 
-        $need_array = $this->_return_format == CODEBIRD_RETURNFORMAT_ARRAY;
+        $need_array = $this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY;
         if ($reply == '[]') {
             switch ($this->_return_format) {
-                case CODEBIRD_RETURNFORMAT_ARRAY:
+                case SHAPECODE_RETURNFORMAT_ARRAY:
                     return array();
-                case CODEBIRD_RETURNFORMAT_JSON:
+                case SHAPECODE_RETURNFORMAT_JSON:
                     return '{}';
-                case CODEBIRD_RETURNFORMAT_OBJECT:
+                case SHAPECODE_RETURNFORMAT_OBJECT:
                     return new stdClass;
             }
         }
@@ -944,8 +737,20 @@ class Shapecode
                     $reply = explode('&', $reply);
                     foreach ($reply as $element) {
                         if (stristr($element, '=')) {
-                            list($key, $value) = explode('=', $element);
+                            list($key, $value) = explode('=', $element, 2);
+                            $value = rawurldecode($value);
+                            // force SSL
+                            if ($key === 'authentication_url'
+                                && substr($value, 0, 7) === 'http://'
+                            ) {
+                                $value = 'https://' . substr($value, 7);
+                            }
                             $parsed[$key] = $value;
+                            // extract oauth token (API doesn't return separate param)
+                            $token_position = strpos($value, 'oauth_token=');
+                            if ($token_position > -1) {
+                                $parsed['oauth_token'] = substr($value, $token_position + 12);
+                            }
                         } else {
                             $parsed['message'] = $element;
                         }
@@ -955,11 +760,11 @@ class Shapecode
             $reply = json_encode($parsed);
         }
         switch ($this->_return_format) {
-            case CODEBIRD_RETURNFORMAT_ARRAY:
+            case SHAPECODE_RETURNFORMAT_ARRAY:
                 return $parsed;
-            case CODEBIRD_RETURNFORMAT_JSON:
+            case SHAPECODE_RETURNFORMAT_JSON:
                 return $reply;
-            case CODEBIRD_RETURNFORMAT_OBJECT:
+            case SHAPECODE_RETURNFORMAT_OBJECT:
                 return (object) $parsed;
         }
         return $parsed;
