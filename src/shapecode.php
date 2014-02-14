@@ -357,14 +357,12 @@ class Shapecode
         );
 
         $httpmethod = $this->_detectMethod($method_template, $apiparams);
-        $multipart  = $this->_detectMultipart($method_template);
 
         return $this->_callApi(
             $httpmethod,
             $method,
             $method_template,
-            $apiparams,
-            $multipart
+            $apiparams
         );
     }
 
@@ -531,37 +529,20 @@ class Shapecode
     }
 
     /**
-     * Detects if API call should use multipart/form-data
-     *
-     * @param string $method The API method to call
-     *
-     * @return bool Whether the method should be sent as multipart
-     */
-    protected function _detectMultipart($method)
-    {
-        $multiparts = array(
-        );
-        return in_array($method, $multiparts);
-    }
-
-    /**
      * Detect filenames in upload parameters,
-     * build multipart request from upload params
+     * encode loaded files
      *
-     * @param string $method  The API method to call
-     * @param array  $params  The parameters to send along
+     * @param string       $method  The API method to call
+     * @param array  byref $params  The parameters to send along
      *
      * @return void
      */
-    protected function _buildMultipart($method, $params)
+    protected function _encodeFiles($method, &$params)
     {
-        // well, files will only work in multipart methods
-        if (! $this->_detectMultipart($method)) {
-            return;
-        }
-
         // only check specific parameters
         $possible_files = array(
+            'models' => 'file',
+            'models/{modelId}/files' => 'file'
         );
         // method might have files?
         if (! in_array($method, array_keys($possible_files))) {
@@ -570,50 +551,24 @@ class Shapecode
 
         $possible_files = explode(' ', $possible_files[$method]);
 
-        $multipart_border = '--------------------' . $this->_nonce();
-        $multipart_request = '';
-
         foreach ($params as $key => $value) {
-            // is it an array?
-            if (is_array($value)) {
-                throw new Exception('Using URL-encoded parameters is not supported for uploading media.');
-                continue;
-            }
-            $multipart_request .=
-                '--' . $multipart_border . "\r\n"
-                . 'Content-Disposition: form-data; name="' . $key . '"';
-
             // check for filenames
             if (in_array($key, $possible_files)) {
                 if (// is it a file, a readable one?
                     @file_exists($value)
                     && @is_readable($value)
-
-                    // is it a valid image?
-                    && $data = @getimagesize($value)
                 ) {
-                    if (// is it a supported image format?
-                        in_array($data[2], $this->_supported_media_files)
-                    ) {
-                        // try to read the file
-                        ob_start();
-                        readfile($value);
-                        $data = ob_get_contents();
-                        ob_end_clean();
-                        if (strlen($data) == 0) {
-                            continue;
-                        }
-                        $value = $data;
+                    // try to read the file
+                    $data = @file_get_contents($value);
+                    if ($data === false || strlen($data) === 0) {
+                        continue;
                     }
+                    $params[$key] = rawurlencode(base64_encode($data));
                 }
             }
-
-            $multipart_request .=
-                "\r\n\r\n" . $value . "\r\n";
         }
-        $multipart_request .= '--' . $multipart_border . '--';
 
-        return $multipart_request;
+        return;
     }
 
 
@@ -642,12 +597,11 @@ class Shapecode
      * @param string          $method          The API method to call
      * @param string          $method_template The templated API method to call
      * @param array  optional $params          The parameters to send along
-     * @param bool   optional $multipart       Whether to use multipart/form-data
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApi($httpmethod, $method, $method_template, $params = array(), $multipart = false)
+    protected function _callApi($httpmethod, $method, $method_template, $params = array())
     {
         if (! function_exists('curl_init')) {
             throw new Exception('To make API requests, the PHP curl extension must be available.');
@@ -662,19 +616,16 @@ class Shapecode
             $authorization = $this->_sign($httpmethod, $url, $params);
             $ch = curl_init($url_with_params);
         } else {
-            if ($multipart) {
-                $authorization = $this->_sign($httpmethod, $url, array());
-                $params        = $this->_buildMultipart($method_template, $params);
+            if (substr($method_template, 0, 7) === 'oauth1/') {
+                $authorization = $this->_sign($httpmethod, $url, $params);
+                $params = http_build_query($params);
             } else {
-                if (substr($method_template, 0, 7) === 'oauth1/') {
-                    $authorization = $this->_sign($httpmethod, $url, $params);
-                    $params = http_build_query($params);
-                } else {
-                    $authorization = $this->_sign($httpmethod, $url, array());
-                    $params = json_encode($params);
-                    $request_headers[]  = 'Content-Length: ' . strlen($params);
-                    $request_headers[]  = 'Content-Type: application/json';
-                }
+                $authorization = $this->_sign($httpmethod, $url, array());
+                // load files, if any
+                $this->_encodeFiles($method_template, $params);
+                $params = json_encode($params);
+                $request_headers[]  = 'Content-Length: ' . strlen($params);
+                $request_headers[]  = 'Content-Type: application/json';
             }
             $ch = curl_init($url);
             if ($httpmethod === 'POST') {
@@ -688,13 +639,6 @@ class Shapecode
         if (isset($authorization)) {
             $request_headers[] = $authorization;
             $request_headers[] = 'Expect:';
-        }
-        if ($multipart) {
-            $first_newline      = strpos($params, "\r\n");
-            $multipart_boundary = substr($params, 2, $first_newline - 2);
-            $request_headers[]  = 'Content-Length: ' . strlen($params);
-            $request_headers[]  = 'Content-Type: multipart/form-data; boundary='
-                . $multipart_boundary;
         }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
