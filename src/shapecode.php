@@ -312,25 +312,29 @@ class Shapecode
             }
             $method .= $path[$i];
         }
-        // undo replacement for URL parameters
-        $url_parameters_with_underscore = array();
-        foreach ($url_parameters_with_underscore as $param) {
-            $param = strtoupper($param);
-            $replacement_was = str_replace('_', '/', $param);
-            $method = str_replace($replacement_was, $param, $method);
-        }
 
         // replace AA by URL parameters
         $method_template = $method;
         $match   = array();
-        if (preg_match('/[A-Z_]{2,}/', $method, $match)) {
+        if (preg_match('/[A-Z]{2,}/', $method, $match)) {
             foreach ($match as $param) {
                 $param_l = strtolower($param);
-                $method_template = str_replace($param, ':' . $param_l, $method_template);
+                if (substr($param_l, -2) === 'id') {
+                    $param_l = substr($param_l, 0, -2) . 'Id';
+                }
+                if (substr($param_l, -7) === 'version') {
+                    $param_l = substr($param_l, 0, -7) . 'Version';
+                }
+                $method_template = str_replace($param, '{' . $param_l . '}', $method_template);
                 if (!isset($apiparams[$param_l])) {
                     for ($i = 0; $i < 26; $i++) {
                         $method_template = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method_template);
                     }
+                    $method_template = str_replace(
+                        array('_id', '_version'),
+                        array('Id', 'Version'),
+                        $method_template
+                    );
                     throw new Exception(
                         'To call the templated method "' . $method_template
                         . '", specify the parameter value for "' . $param_l . '".'
@@ -346,6 +350,11 @@ class Shapecode
             $method  = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method);
             $method_template = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method_template);
         }
+        $method_template = str_replace(
+            array('_id', '_version'),
+            array('Id', 'Version'),
+            $method_template
+        );
 
         $httpmethod = $this->_detectMethod($method_template, $apiparams);
         $multipart  = $this->_detectMultipart($method_template);
