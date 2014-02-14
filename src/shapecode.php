@@ -654,7 +654,7 @@ class Shapecode
         }
         $url = $this->_getEndpoint($method, $method_template);
         $ch  = false;
-        if ($httpmethod == 'GET') {
+        if ($httpmethod === 'GET') {
             $url_with_params = $url;
             if (count($params) > 0) {
                 $url_with_params .= '?' . http_build_query($params);
@@ -677,8 +677,12 @@ class Shapecode
                 }
             }
             $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            if ($httpmethod === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            } else {
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
+            }
         }
         $request_headers = array();
         if (isset($authorization)) {
