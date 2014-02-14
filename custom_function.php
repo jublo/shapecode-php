@@ -41,7 +41,15 @@ function upload3DFile(
     $sc = Shapecode::getInstance();
     $sc->setToken($access_token, $access_token_secret);
 
-    // TODO: parse tags
+    // comma-separated list of tags?
+    if (is_string($tags)) {
+        $tags = explode(',', $tags);
+        // remove leading and trailing spaces
+        for ($i = 0; $i < count($tags); $i++) {
+            $tags[$i] = trim($tags[$i]);
+        }
+    }
+
     // TODO: obtain allowed materials list (not excluded)
     // TODO: obtain default material ID (not name)
     // TODO: What's colorFlag?
@@ -54,8 +62,8 @@ function upload3DFile(
         'acceptTermsAndConditions' => 1,
         'title' => $name,
         'description' => $description,
-        'isPublic' => 1,
-        'isForSale' => 1,
+        'isPublic' => 0,
+        'isForSale' => 0,
         'isDownloadable' => 0,
         'tags' => $tags,
         'materials' => array(),
