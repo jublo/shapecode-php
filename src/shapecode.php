@@ -495,8 +495,20 @@ class Shapecode
     {
         // multi-HTTP method endpoints
         switch($method) {
-            case '_TODO_':
-                $method = count($params) > 0 ? $method . '__post' : $method;
+            case 'orders/cart':
+                // detect orders/cart from number of params
+                $method = count($params) > 0 ? $method . ' (POST)' : $method;
+                break;
+            case 'models':
+                // detect models from required fileName param
+                $method = isset($params['fileName']) ? $method . ' (POST)' : $method;
+                break;
+            case 'models/{modelId}':
+                // detect models/{modelId} from delete param
+                if (isset($params['delete']) && $params['delete']) {
+                    $method .= ' (DELETE)';
+                    unset($params['delete']);
+                }
                 break;
         }
 
