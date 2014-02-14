@@ -486,12 +486,12 @@ class Shapecode
     /**
      * Detects HTTP method to use for API call
      *
-     * @param string $method The API method to call
-     * @param array  $params The parameters to send along
+     * @param string       $method The API method to call
+     * @param array  byref $params The parameters to send along
      *
      * @return string The HTTP method that should be used
      */
-    protected function _detectMethod($method, $params)
+    protected function _detectMethod($method, &$params)
     {
         // multi-HTTP method endpoints
         switch($method) {
