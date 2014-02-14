@@ -657,8 +657,15 @@ class Shapecode
                 $authorization = $this->_sign($httpmethod, $url, array());
                 $params        = $this->_buildMultipart($method_template, $params);
             } else {
-                $authorization = $this->_sign($httpmethod, $url, $params);
-                $params        = http_build_query($params);
+                if (substr($method_template, 0, 7) === 'oauth1/') {
+                    $authorization = $this->_sign($httpmethod, $url, $params);
+                    $params = http_build_query($params);
+                } else {
+                    $authorization = $this->_sign($httpmethod, $url, array());
+                    $params = json_encode($params);
+                    $request_headers[]  = 'Content-Length: ' . strlen($params);
+                    $request_headers[]  = 'Content-Type: application/json';
+                }
             }
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_POST, 1);
