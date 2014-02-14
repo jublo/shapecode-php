@@ -207,12 +207,52 @@ class Shapecode
     {
         static $apimethods = array(
             'GET' => array(
-                'api'
+                // API
+                'api',
+
+                // Cart
+                'orders/cart',
+
+                // Materials
+                'materials',
+                'materials/{materialId}',
+
+                // Models
+                'models',
+                'models/{modelId}',
+                'models/{modelId}/info',
+                'models/{modelId}/files/{fileVersion}',
+
+                // Printers
+                'printers',
+                'printers/{printerId}',
+
+                // Category
+                'categories',
+                'categories/{categoryId}'
             ),
             'POST' => array(
-                // OAuth
+                // OAuth1
                 'oauth1/access_token',
-                'oauth1/request_token'
+                'oauth1/request_token',
+
+                // Cart
+                'orders/cart (POST)',
+
+                // Models
+                'models (POST)',
+                'models/{modelId}/files',
+                'models/{modelId}/photos',
+
+                // Price
+                'price'
+            ),
+            'PUT' => array(
+                // Models
+                'models/{modelId}/info (PUT)'
+            ),
+            'DELETE' => array(
+                'models/{modelId} (DELETE)'
             )
         );
         return $apimethods;
