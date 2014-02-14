@@ -207,12 +207,52 @@ class Shapecode
     {
         static $apimethods = array(
             'GET' => array(
-                'api'
+                // API
+                'api',
+
+                // Cart
+                'orders/cart',
+
+                // Materials
+                'materials',
+                'materials/{materialId}',
+
+                // Models
+                'models',
+                'models/{modelId}',
+                'models/{modelId}/info',
+                'models/{modelId}/files/{fileVersion}',
+
+                // Printers
+                'printers',
+                'printers/{printerId}',
+
+                // Category
+                'categories',
+                'categories/{categoryId}'
             ),
             'POST' => array(
-                // OAuth
+                // OAuth1
                 'oauth1/access_token',
-                'oauth1/request_token'
+                'oauth1/request_token',
+
+                // Cart
+                'orders/cart (POST)',
+
+                // Models
+                'models (POST)',
+                'models/{modelId}/files',
+                'models/{modelId}/photos',
+
+                // Price
+                'price'
+            ),
+            'PUT' => array(
+                // Models
+                'models/{modelId}/info (PUT)'
+            ),
+            'DELETE' => array(
+                'models/{modelId} (DELETE)'
             )
         );
         return $apimethods;
@@ -272,25 +312,29 @@ class Shapecode
             }
             $method .= $path[$i];
         }
-        // undo replacement for URL parameters
-        $url_parameters_with_underscore = array();
-        foreach ($url_parameters_with_underscore as $param) {
-            $param = strtoupper($param);
-            $replacement_was = str_replace('_', '/', $param);
-            $method = str_replace($replacement_was, $param, $method);
-        }
 
         // replace AA by URL parameters
         $method_template = $method;
         $match   = array();
-        if (preg_match('/[A-Z_]{2,}/', $method, $match)) {
+        if (preg_match('/[A-Z]{2,}/', $method, $match)) {
             foreach ($match as $param) {
                 $param_l = strtolower($param);
-                $method_template = str_replace($param, ':' . $param_l, $method_template);
+                if (substr($param_l, -2) === 'id') {
+                    $param_l = substr($param_l, 0, -2) . 'Id';
+                }
+                if (substr($param_l, -7) === 'version') {
+                    $param_l = substr($param_l, 0, -7) . 'Version';
+                }
+                $method_template = str_replace($param, '{' . $param_l . '}', $method_template);
                 if (!isset($apiparams[$param_l])) {
                     for ($i = 0; $i < 26; $i++) {
                         $method_template = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method_template);
                     }
+                    $method_template = str_replace(
+                        array('_id', '_version'),
+                        array('Id', 'Version'),
+                        $method_template
+                    );
                     throw new Exception(
                         'To call the templated method "' . $method_template
                         . '", specify the parameter value for "' . $param_l . '".'
@@ -306,6 +350,11 @@ class Shapecode
             $method  = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method);
             $method_template = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method_template);
         }
+        $method_template = str_replace(
+            array('_id', '_version'),
+            array('Id', 'Version'),
+            $method_template
+        );
 
         $httpmethod = $this->_detectMethod($method_template, $apiparams);
         $multipart  = $this->_detectMultipart($method_template);
@@ -446,17 +495,29 @@ class Shapecode
     /**
      * Detects HTTP method to use for API call
      *
-     * @param string $method The API method to call
-     * @param array  $params The parameters to send along
+     * @param string       $method The API method to call
+     * @param array  byref $params The parameters to send along
      *
      * @return string The HTTP method that should be used
      */
-    protected function _detectMethod($method, $params)
+    protected function _detectMethod($method, &$params)
     {
         // multi-HTTP method endpoints
         switch($method) {
-            case '_TODO_':
-                $method = count($params) > 0 ? $method . '__post' : $method;
+            case 'orders/cart':
+                // detect orders/cart from number of params
+                $method = count($params) > 0 ? $method . ' (POST)' : $method;
+                break;
+            case 'models':
+                // detect models from required fileName param
+                $method = isset($params['fileName']) ? $method . ' (POST)' : $method;
+                break;
+            case 'models/{modelId}':
+                // detect models/{modelId} from delete param
+                if (isset($params['delete']) && $params['delete']) {
+                    $method .= ' (DELETE)';
+                    unset($params['delete']);
+                }
                 break;
         }
 
@@ -593,7 +654,7 @@ class Shapecode
         }
         $url = $this->_getEndpoint($method, $method_template);
         $ch  = false;
-        if ($httpmethod == 'GET') {
+        if ($httpmethod === 'GET') {
             $url_with_params = $url;
             if (count($params) > 0) {
                 $url_with_params .= '?' . http_build_query($params);
@@ -605,12 +666,23 @@ class Shapecode
                 $authorization = $this->_sign($httpmethod, $url, array());
                 $params        = $this->_buildMultipart($method_template, $params);
             } else {
-                $authorization = $this->_sign($httpmethod, $url, $params);
-                $params        = http_build_query($params);
+                if (substr($method_template, 0, 7) === 'oauth1/') {
+                    $authorization = $this->_sign($httpmethod, $url, $params);
+                    $params = http_build_query($params);
+                } else {
+                    $authorization = $this->_sign($httpmethod, $url, array());
+                    $params = json_encode($params);
+                    $request_headers[]  = 'Content-Length: ' . strlen($params);
+                    $request_headers[]  = 'Content-Type: application/json';
+                }
             }
             $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            if ($httpmethod === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            } else {
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
+            }
         }
         $request_headers = array();
         if (isset($authorization)) {
