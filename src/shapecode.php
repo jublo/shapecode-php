@@ -655,7 +655,7 @@ class Shapecode
         curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem');
+        curl_setopt($ch, CURLOPT_CAINFO, dirname(__FILE__) . '/cacert.pem');
 
         if (isset($this->_timeout)) {
             curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);
