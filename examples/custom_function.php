@@ -1,8 +1,5 @@
 <?php
 
-// get OAuth tokens from external file, not included in repo
-require_once('private_shapeways_tokens.php');
-
 /**
  * Uploads a 3D model
  *
@@ -70,6 +67,9 @@ function upload3DFile(
         'defaultMaterialId' => 6
     ));
 }
+
+// get OAuth tokens from external file, not included in repo
+require_once('private_shapeways_tokens.php');
 
 print_r(upload3DFile(
     '../demo-data/cube-1cm3-centered_in_meter.stl', // path to the file to upload
