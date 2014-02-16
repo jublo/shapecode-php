@@ -9,7 +9,7 @@
  * @param string $tags                 Comma-separated list of tags to apply
  * @param string $default_material     Name of the default material
  * @param array  $disallowed_materials Array of materials not allowed
- * @param TODO   $markup               TODO
+ * @param float  $markup               Price markup to earn
  * @param string $consumer_key         OAuth app key
  * @param string $consumer_secret      OAuth app secret
  * @param string $access_token         OAuth access token to the account to upload to
@@ -76,7 +76,7 @@ print_r(upload3DFile(
     'test, demo, coding, cube', // provided like « a,b,c »...
     'White Strong & Flexible', // defaultMaterialName example: White Strong & Flexible
     array('Disallowed 1', 'Disallowed 2'), // $excludedMaterials, // array with all material names not allowed...
-    'markup', // $markup,  // same markup for each material
+    1.99, // $markup, same markup for each material
 
     // for Oauth protocol (correct me if this is wrong)
     SHAPEWAYS_CONSUMER_KEY, // $consumer_key,
