@@ -140,7 +140,7 @@ function upload3DFile(
 // get OAuth tokens from external file, not included in repo
 require_once('private_shapeways_tokens.php');
 
-print_r(upload3DFile(
+$upload_data = upload3DFile(
     '../demo-data/cube-1cm3-centered_in_meter.stl', // path to the file to upload
     'Test Model', // name of the 3D model
     'This is a test model showing a cube.', // description of the 3D model
@@ -154,5 +154,11 @@ print_r(upload3DFile(
     SHAPEWAYS_CONSUMER_SECRET, // $consumer_secret
     SHAPEWAYS_ACCESS_TOKEN, // $access_token,
     SHAPEWAYS_ACCESS_TOKEN_SECRET // $access_token_secret
-));
+);
+
+// here you can check if the upload worked
+if ($upload_data->result === 'success') {
+    // maybe store the modelId in your database?
+    echo $upload_data->modelId;
+}
 
