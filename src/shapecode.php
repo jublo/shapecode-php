@@ -517,6 +517,10 @@ class Shapecode
                     unset($params['delete']);
                 }
                 break;
+            case 'models/{modelId}/info':
+                // detect models/{modelId}/info from any param
+                $method = count($params) > 0 ? $method . ' (PUT)' : $method;
+                break;
         }
 
         $apimethods = $this->getApiMethods();
