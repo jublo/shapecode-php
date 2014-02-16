@@ -103,7 +103,23 @@ function upload3DFile(
         return false;
     }
 
-    // TODO: obtain allowed materials list (not excluded)
+    // build materials list
+    $materials = array();
+    foreach ($all_materials as $material_name => $material_id) {
+
+        // skip disallowed materials
+        if (is_array($disallowed_materials)
+            && in_array($material_name, $disallowed_materials)
+        ) {
+            continue;
+        }
+
+        $materials[$material_id] = array(
+            'id' => $material_id,
+            'markup' => $markup,
+            'isActive' => 1
+        );
+    }
 
     return $sc->models(array(
         'file' => $file,
@@ -116,7 +132,7 @@ function upload3DFile(
         'isForSale' => 0,
         'isDownloadable' => 0,
         'tags' => $tags,
-        'materials' => array(),
+        'materials' => $materials,
         'defaultMaterialId' => $all_materials[$default_material] // use ID
     ));
 }
