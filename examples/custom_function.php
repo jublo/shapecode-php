@@ -97,6 +97,12 @@ function upload3DFile(
         return false;
     }
 
+    // validate markup
+    if (! is_numeric($markup)) {
+        throw new Exception('Non-numeric markup: "' . htmlspecialchars($markup) . '"');
+        return false;
+    }
+
     // TODO: obtain allowed materials list (not excluded)
 
     return $sc->models(array(
