@@ -145,8 +145,8 @@ $upload_data = upload3DFile(
     'Test Model', // name of the 3D model
     'This is a test model showing a cube.', // description of the 3D model
     'test, demo, coding, cube', // provided like « a,b,c »...
-    'White Strong & Flexible', // defaultMaterialName example: White Strong & Flexible
-    array('Disallowed 1', 'Disallowed 2'), // $excludedMaterials, // array with all material names not allowed...
+    'Royal Blue Strong & Flexible Polished', // defaultMaterialName
+    array('Avocado Green Ceramics', 'Raw Bronze'), // $excludedMaterials, array with all material names not allowed
     1.99, // $markup, same markup for each material
 
     // for Oauth protocol (correct me if this is wrong)
