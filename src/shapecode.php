@@ -4,7 +4,7 @@
  * A Shapeways API client in PHP.
  *
  * @package shapecode
- * @version 1.0.0-dev
+ * @version 1.0.0-beta.1
  * @author Jublo IT Solutions <support@jublo.net>
  * @copyright 2014 Jublo IT Solutions <support@jublo.net>
  *
@@ -95,7 +95,7 @@ class Shapecode
     /**
      * The current Shapecode version
      */
-    protected $_version = '1.0.0-dev';
+    protected $_version = '1.0.0-beta.1';
 
     /**
      * Request timeout
