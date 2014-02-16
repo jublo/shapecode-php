@@ -91,10 +91,13 @@ function upload3DFile(
         }
     }
 
+    // validate default material
+    if (! in_array($default_material, $all_material_names)) {
+        throw new Exception('Unknown default material: "' . htmlspecialchars($default_material) . '"');
+        return false;
+    }
+
     // TODO: obtain allowed materials list (not excluded)
-    // TODO: obtain default material ID (not name)
-    // TODO: What's colorFlag?
-    // TODO: What's markup?
 
     return $sc->models(array(
         'file' => $file,
@@ -108,7 +111,7 @@ function upload3DFile(
         'isDownloadable' => 0,
         'tags' => $tags,
         'materials' => array(),
-        'defaultMaterialId' => 6
+        'defaultMaterialId' => $all_materials[$default_material] // use ID
     ));
 }
 
