@@ -31,6 +31,52 @@ function upload3DFile(
     $access_token_secret
 )
 {
+    // materials as of 2014-02-16
+    $all_materials = (array) json_decode('
+        {
+            "White Strong & Flexible": 6,
+            "White Strong & Flexible Polished": 62,
+            "Black Strong & Flexible": 25,
+            "Coral Red Strong & Flexible Polished": 76,
+            "Hot Pink Strong & Flexible Polished": 77,
+            "Royal Blue Strong & Flexible Polished": 78,
+            "Violet Purple Strong & Flexible Polished": 75,
+            "Elasto Plastic": 82,
+            "Frosted Ultra Detail": 61,
+            "Frosted Detail": 60,
+            "White Detail": 5,
+            "Black Detail": 7,
+            "Transparent Detail": 4,
+            "Full Color Sandstone": 26,
+            "Sandstone": 27,
+            "Gloss Black Ceramics": 64,
+            "Pastel Yellow Ceramics": 74,
+            "Eggshell Blue Ceramics": 72,
+            "Glazed Ceramics": 63,
+            "Avocado Green Ceramics": 73,
+            "Satin Black Ceramics": 70,
+            "Matte Black Steel": 89,
+            "Polished Grey Steel": 90,
+            "Polished Brass": 85,
+            "Polished Bronze": 87,
+            "Polished Nickel Steel": 88,
+            "Raw Bronze": 86,
+            "Gold Plated Brass": 83,
+            "Raw Brass": 84,
+            "Premium Silver": 81,
+            "Polished Silver": 54,
+            "Raw Silver": 53,
+            "Stainless Steel": 23,
+            "Matte Gold Steel": 31,
+            "Polished Gold Steel": 39,
+            "Matte Bronze Steel": 37,
+            "Polished Bronze Steel": 38,
+            "Polished Alumide": 66,
+            "Alumide": 28
+        }
+    ');
+    $all_material_names = array_keys($all_materials);
+
     require_once('../src/shapecode.php');
     Shapecode::setConsumerKey($consumer_key, $consumer_secret);
     $sc = Shapecode::getInstance();
