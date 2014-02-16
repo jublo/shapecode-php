@@ -36,7 +36,7 @@ function upload3DFile(
     $access_token_secret
 )
 {
-    require_once('src/shapecode.php');
+    require_once('../src/shapecode.php');
     Shapecode::setConsumerKey($consumer_key, $consumer_secret);
     $sc = Shapecode::getInstance();
     $sc->setToken($access_token, $access_token_secret);
@@ -72,7 +72,7 @@ function upload3DFile(
 }
 
 print_r(upload3DFile(
-    'demo-data/cube-1cm3-centered_in_meter.stl', // path to the file to upload
+    '../demo-data/cube-1cm3-centered_in_meter.stl', // path to the file to upload
     'Test Model', // name of the 3D model
     'This is a test model showing a cube.', // description of the 3D model
     'test, demo, coding, cube', // provided like « a,b,c »...
