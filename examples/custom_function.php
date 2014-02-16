@@ -7,7 +7,6 @@
  * @param string $name                 Model name
  * @param string $description          Model description
  * @param string $tags                 Comma-separated list of tags to apply
- * @param bool   $colorflag            TODO
  * @param string $default_material     Name of the default material
  * @param array  $disallowed_materials Array of materials not allowed
  * @param TODO   $markup               TODO
@@ -23,7 +22,6 @@ function upload3DFile(
     $name,
     $description,
     $tags,
-    $colorflag,
     $default_material,
     $disallowed_materials,
     $markup,
@@ -76,7 +74,6 @@ print_r(upload3DFile(
     'Test Model', // name of the 3D model
     'This is a test model showing a cube.', // description of the 3D model
     'test, demo, coding, cube', // provided like « a,b,c »...
-    true, // colorFlag boolean
     'White Strong & Flexible', // defaultMaterialName example: White Strong & Flexible
     array('Disallowed 1', 'Disallowed 2'), // $excludedMaterials, // array with all material names not allowed...
     'markup', // $markup,  // same markup for each material
