@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ### Requirements
 
-- PHP 5.3.0 or higher
+- PHP 5.2.0 or higher
 - CURL extension
 - JSON extension
 - OpenSSL extension
