@@ -624,8 +624,8 @@ class Shapecode
                 // load files, if any
                 $this->_encodeFiles($method_template, $params);
                 $params = json_encode($params);
-                $request_headers[]  = 'Content-Length: ' . strlen($params);
-                $request_headers[]  = 'Content-Type: application/json';
+                $request_headers[] = 'Content-Length: ' . strlen($params);
+                $request_headers[] = 'Content-Type: application/json';
             }
             $ch = curl_init($url);
             if ($httpmethod === 'POST') {
@@ -633,6 +633,7 @@ class Shapecode
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             } else {
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             }
         }
         $request_headers = array();
