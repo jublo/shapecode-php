@@ -417,7 +417,7 @@ class Shapecode
         if (self::$_oauth_consumer_secret == null) {
             throw new Exception('To generate a hash, the consumer secret must be set.');
         }
-        if (!function_exists('hash_hmac')) {
+        if (! function_exists('hash_hmac')) {
             throw new Exception('To generate a hash, the PHP hash extension must be available.');
         }
         return base64_encode(hash_hmac('sha1', $data, self::$_oauth_consumer_secret . '&'
@@ -610,6 +610,9 @@ class Shapecode
         if (! function_exists('curl_init')) {
             throw new Exception('To make API requests, the PHP curl extension must be available.');
         }
+        if (! function_exists('json_encode')) {
+            throw new Exception('To make API requests, the PHP json extension must be available.');
+        }
         $url = $this->_getEndpoint($method, $method_template);
         $ch  = false;
         if ($httpmethod === 'GET') {
@@ -652,7 +655,7 @@ class Shapecode
         curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem');
+        curl_setopt($ch, CURLOPT_CAINFO, dirname(__FILE__) . '/cacert.pem');
 
         if (isset($this->_timeout)) {
             curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);

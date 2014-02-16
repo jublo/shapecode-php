@@ -23,8 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ### Requirements
 
-- PHP 5.3.0 or higher
+- PHP 5.2.0 or higher
 - CURL extension
+- JSON extension
 - OpenSSL extension
 
 
@@ -101,10 +102,10 @@ $reply = (array) $sc->api();
 print_r($reply);
 ```
 
-Tweeting is as easy as this:
+Adding a model to your cart is as easy as this:
 
 ```php
-$reply = $sc->statuses_update('status=Whohoo, I just tweeted!');
+$reply = $sc->orders_cart('modelId=480903');
 ```
 
 For more complex parameters (see the [Shapeways API documentation](https://developers.shapeways.com/)),
@@ -112,19 +113,33 @@ giving all parameters in an array is supported, too:
 
 ```php
 $params = array(
-    'screen_name' => 'jublonet'
+    'modelId' => '480903',
+    'materialId' => 61,
+    'quantity' => 3
 );
-$reply = $sc->users_show($params);
+$reply = $sc->orders_cart($params);
 ```
 
-When **uploading files to Shapeways**, the array syntax is obligatory:
+When **uploading files to Shapeways**, just give the file path:
 
 ```php
 $params = array(
-    'status' => 'Look at this crazy cat! #lolcats',
-    'media[]' => '/home/jublonet/lolcats.jpg'
+    'file' => 'in-some-folder/there-is/the-model.stl',
+    'fileName' => 'the-model.stl',
+    'hasRightsToModel' => 1,
+    'acceptTermsAndConditions' => 1,
+    'title' => 'My great model',
+    'description' => 'Lorem ipsum dolor sit amet',
+    'isPublic' => 1,
+    'isForSale' => 1,
+    'isDownloadable' => 0,
+    'tags' => array(
+        'ideas',
+        'miniatures',
+        'stuff'
+    )
 );
-$reply = $sc->statuses_updateWithMedia($params);
+$reply = $sc->models($params); // required HTTP POST is auto-detected
 ```
 
 3. Mapping API methods to Shapecode function calls
@@ -133,33 +148,40 @@ $reply = $sc->statuses_updateWithMedia($params);
 As you can see from the last example, there is a general way how the Shapeways
 API methods map to Shapecode function calls. The general rules are:
 
-1. For each slash in a Shapeways API method, use an underscore in the Shapecode function.
+1. Omit the version info in the function name.
 
-    Example: ```statuses/update``` maps to ```Shapecode::statuses_update()```.
+    Example: ```/v1``` is not part of the Shapecode function call.
 
-2. For each underscore in a Shapeways API method, use camelCase in the Shapecode function.
+2. For each slash in a Shapeways API method, use an underscore in the Shapecode function.
 
-    Example: ```statuses/home_timeline``` maps to ```Shapecode::statuses_homeTimeline()```.
+    Example: ```orders/cart/v1``` maps to ```Shapecode::orders_cart()```.
 
-3. For each parameter template in method, use UPPERCASE in the Shapecode function.
+3. For each underscore in a Shapeways API method, use camelCase in the Shapecode function.
+
+    Example: ```oauth1/request_token/v1``` maps to ```Shapecode::oauth1_requestToken()```.
+
+4. For each parameter template in method, use UPPERCASE in the Shapecode function.
     Also don’t forget to include the parameter in your parameter list.
 
-    Examples:
-    - ```statuses/show/:id``` maps to ```Shapecode::statuses_show_ID('id=12345')```.
-    - ```users/profile_image/:screen_name``` maps to
-      ```Shapecode::users_profileImage_SCREEN_NAME('screen_name=jublonet')```.
+    Example:
+    - ```materials/{materialId}/v1``` maps to ```Shapecode::materials_MATERIALID('materialId=73')```.
 
 4. HTTP methods (GET, POST, DELETE etc.)
 ----------------------------------------
 
 Never care about which HTTP method (verb) to use when calling a Shapeways API.
 Shapecode is intelligent enough to find out on its own.
+For the automatic detection to work, be sure to use the correct required parameters,
+as outlined in the [Shapeways API documentation](https://developers.shapeways.com/).
 
 5. Response codes
 -----------------
 
 The HTTP response code that the API gave is included in any return values.
 You can find it within the return object’s ```httpstatus``` property.
+
+To know whether your API call was successful, check the ```$reply->result``` string,
+which either reads ```success``` or ```failure```.
 
 ### 5.1 Dealing with rate-limits
 
@@ -169,20 +191,16 @@ The library returns the response HTTP status code, so you can detect rate limits
 I suggest you to check if the ```$reply->httpstatus``` property is ```400```
 and check with the Shapeways API to find out if you are currently being
 rate-limited.
+
+The current rate limit is returned in the ```api/v1/``` API method,
+callable with ```$sc->api()```.
+
 See the [Rate Limiting FAQ](https://dev.twitter.com/docs/rate-limiting-faq)
 for more information.
 
 6. Return formats
 -----------------
 The default return format for API calls is a PHP object.
-For API methods returning multiple data (like ```statuses/home_timeline```),
-you should cast the reply to array, like this:
-
-```php
-$reply = $sc->statuses_homeTimeline();
-$data = (array) $reply;
-```
-
 Upon your choice, you may also get PHP arrays directly:
 
 ```php
@@ -226,92 +244,34 @@ secrets are *not* shared.
 How Do I…?
 ==========
 
-…access a user’s profile image?
--------------------------------
+…walk through paged results?
+----------------------------
 
-First retrieve the user object using
-
-```$reply = $sc->users_show("screen_name=$username");```
-
-
-with ```$username``` being the username of the account you wish to retrieve the profile image from.
-
-Then get the value from the index ```profile_image_url``` or ```profile_image_url_https``` of the user object previously retrieved.
-
-
-For example:
-
-```$reply['profile_image_url']``` will then return the profile image url without https.
-
-…get user ID, screen name and more details about the current user?
-------------------------------------------------------------------
-
-When the user returns from the authentication screen, you need to trade
-the obtained request token for an access token, using the OAuth verifier.
-As discussed in the section ‘Usage example,’ you use a call to
-```oauth1/access_token``` to do that.
-
-The API reply to this method call tells you details about the user that just logged in.
-These details contain the **user ID** and the **screen name.**
-
-Take a look at the returned data as follows:
-
-```
-stdClass Object
-(
-    [oauth_token] => 14648265-rPn8EJwfB**********************
-    [oauth_token_secret] => agvf3L3**************************
-    [user_id] => 14648265
-    [screen_name] => jublonet
-    [httpstatus] => 200
-)
-```
-
-If you need to get more details, such as the user’s latest tweet,
-you should fetch the complete User Entity.  The simplest way to get the
-user entity of the currently authenticated user is to use the
-```account/verify_credentials``` API method.  In Shapecode, it works like this:
-
-```php
-$reply = $sc->account_verifyCredentials();
-print_r($reply);
-```
-
-I suggest to cache the User Entity after obtaining it, as the
-```account/verify_credentials``` method is rate-limited by 15 calls per 15 minutes.
-
-…walk through cursored results?
--------------------------------
-
-The Twitter REST API utilizes a technique called ‘cursoring’ to paginate
-large result sets. Cursoring separates results into pages of no more than
-5000 results at a time, and provides a means to move backwards and
+The Shapeways API utilizes a technique called ‘paging’ for
+large result sets. Pages separates results into pages of no more than
+36 results at a time, and provides a means to move backwards and
 forwards through these pages.
 
-Here is how you can walk through cursored results with Shapecode.
+Here is how you can walk through paged results with Shapecode.
 
-1. Get the first result set of a cursored method:
+1. Get the first result set of a paged method:
 ```php
-$result1 = $sc->followers_list();
+$page = 1;
+$result1 = $sc->models();
 ```
 
-2. To navigate forth, take the ```next_cursor_str```:
+2. To navigate forth, increment the ```$page```:
 ```php
-$nextCursor = $result1->next_cursor_str;
+$page++;
 ```
 
 3. If ```$nextCursor``` is not 0, use this cursor to request the next result page:
 ```php
-    if ($nextCursor > 0) {
-        $result2 = $sc->followers_list('cursor=' . $nextCursor);
-    }
+    $result2 = $sc->models("page=$page");
 ```
 
-To navigate back instead of forth, use the field ```$resultX->previous_cursor_str```
-instead of ```next_cursor_str```.
-
-It might make sense to use the cursors in a loop.  Watch out, though,
-not to send more than the allowed number of requests to ```followers/list```
+It might make sense to use the pages in a loop.  Watch out, though,
+not to send more than the allowed number of requests
 per rate-limit timeframe, or else you will hit your rate-limit.
 
 …know what cacert.pem is for?
