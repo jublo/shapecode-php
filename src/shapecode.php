@@ -517,6 +517,10 @@ class Shapecode
                     unset($params['delete']);
                 }
                 break;
+            case 'models/{modelId}/info':
+                // detect models/{modelId}/info from any param
+                $method = count($params) > 0 ? $method . ' (PUT)' : $method;
+                break;
         }
 
         $apimethods = $this->getApiMethods();
@@ -624,8 +628,8 @@ class Shapecode
                 // load files, if any
                 $this->_encodeFiles($method_template, $params);
                 $params = json_encode($params);
-                $request_headers[]  = 'Content-Length: ' . strlen($params);
-                $request_headers[]  = 'Content-Type: application/json';
+                $request_headers[] = 'Content-Length: ' . strlen($params);
+                $request_headers[] = 'Content-Type: application/json';
             }
             $ch = curl_init($url);
             if ($httpmethod === 'POST') {
@@ -633,6 +637,7 @@ class Shapecode
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             } else {
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             }
         }
         $request_headers = array();
