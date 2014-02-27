@@ -174,6 +174,10 @@ Shapecode is intelligent enough to find out on its own.
 For the automatic detection to work, be sure to use the correct required parameters,
 as outlined in the [Shapeways API documentation](https://developers.shapeways.com/).
 
+The only exception to the above is the `DELETE models/{modelId}` method.
+To call it, use the `delete=1` parameter. It will trigger the DELETE method,
+but is not sent to the API.
+
 5. Response codes
 -----------------
 
