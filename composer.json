@@ -1,16 +1,41 @@
 {
     "name": "jublonet/shapecode-php",
     "description" : "A Shapeways API library in PHP.",
-    "version": "1.0.0",
-    "autoload": {
-        "classmap": ["src/"]
-    },
+    "keywords": [
+        "Shapeways",
+        "API",
+        "printing",
+        "modeling",
+        "3D"
+    ],
+    "homepage": "http://www.jublo.net/projects/shapecode/php",
     "license": "LGPL-3.0",
+    "authors": [
+        {
+            "name": "Joshua Atkins",
+            "email": "joshua.atkins@jublo.net",
+            "homepage": "http://atkins.im/",
+            "role": "Developer"
+        },
+        {
+            "name": "J.M.",
+            "email": "jm@jublo.net",
+            "homepage": "http://mynetx.net/",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "email": "support@jublo.net",
+        "issues": "https://github.com/jublonet/shapecode-php/issues",
+        "source": "https://github.com/jublonet/shapecode-php/releases"
+    },
     "require": {
-        "ext-curl": "*",
         "ext-hash": "*",
         "ext-json": "*",
-        "lib-curl": "*",
-        "lib-openssl": "*"
+        "lib-openssl": "*",
+        "composer/installers": "~1.0"
+    },
+    "autoload": {
+        "classmap": ["src/"]
     }
 }
