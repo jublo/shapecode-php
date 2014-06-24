@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### Requirements
 
 - PHP 5.2.0 or higher
-- CURL extension
 - JSON extension
 - OpenSSL extension
 
@@ -267,11 +266,28 @@ at http://curl.haxx.se/docs/caextract.html.
 
 ### …set the timeout for requests to the Shapeways API?
 
-For connecting to Shapeways, Shapecode uses the cURL library.
+For connecting to Shapeways, Shapecode uses the cURL library, if available.
 You can specify both the connection timeout and the request timeout,
 in milliseconds:
 
 ```php
 $sc->setConnectionTimeout(2000);
 $sc->setTimeout(5000);
+```
+
+If you don't specify the timeout, Shapecode uses these values:
+
+- connection time = 5000 ms = 5 s
+- timeout = 2000 ms = 2 s
+
+### …disable cURL?
+
+Shapecode automatically detects whether you have the PHP cURL extension enabled.
+If not, the library will try to connect to the Shapeways API via socket.
+For this to work, the PHP setting `allow_url_fopen` must be enabled.
+
+You may also manually disable cURL.  Use the following call:
+
+```php
+$sc->setUseCurl(false);
 ```
