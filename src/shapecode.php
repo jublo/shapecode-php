@@ -4,7 +4,7 @@
  * A Shapeways API library in PHP.
  *
  * @package   shapecode
- * @version   1.1.0-dev
+ * @version   1.1.0-rc.1
  * @author    Jublo Solutions <support@jublo.net>
  * @copyright 2014 Jublo Solutions <support@jublo.net>
  * @license   http://opensource.org/licenses/LGPL-3.0 GNU Lesser General Public License 3.0
@@ -84,7 +84,7 @@ class Shapecode
     /**
      * The current Shapecode version
      */
-    protected $_version = '1.1.0-dev';
+    protected $_version = '1.1.0-rc.1';
 
     /**
      * Auto-detect cURL absence
