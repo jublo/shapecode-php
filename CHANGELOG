@@ -2,6 +2,10 @@ shapecode-php - changelog
 =========================
 
 1.1.0 (not yet released)
++ Better Proxy HTTP status detection
++ Don't require cURL, allow stream connections too
++ Use default timeout
++ Add composer/installers to allow install path changes
 
 1.0.0 (2014-02-27)
 Initial release
