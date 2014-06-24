@@ -574,7 +574,7 @@ class Shapecode
      *
      * @return string The HTTP method that should be used
      */
-    protected function _detectMethod($method, $params)
+    protected function _detectMethod($method, &$params)
     {
         // multi-HTTP method endpoints
         switch ($method) {
@@ -625,11 +625,11 @@ class Shapecode
             'models/{modelId}/files' => 'file'
         );
         // method might have files?
-        if (! in_array($method, array_keys($possible_files))) {
+        if (! in_array($method_template, array_keys($possible_files))) {
             return;
         }
 
-        $possible_files = explode(' ', $possible_files[$method]);
+        $possible_files = explode(' ', $possible_files[$method_template]);
 
         foreach ($params as $key => $value) {
             // check for filenames
