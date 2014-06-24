@@ -219,8 +219,8 @@ class Shapecode
     }
 
     /**
-     * Get allowed API methods, sorted by GET or POST
-     * Watch out for multiple-method "account/settings"!
+     * Get allowed API methods, sorted by HTTP method
+     * Watch out for multiple-methods!
      *
      * @return array $apimethods
      */
