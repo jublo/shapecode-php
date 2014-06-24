@@ -836,7 +836,8 @@ class Shapecode
                 'protocol_version' => '1.1',
                 'header'           => implode("\r\n", $request_headers),
                 'timeout'          => $this->_timeout / 1000,
-                'content'          => $httpmethod === 'POST' ? $params : null
+                'content'          => $httpmethod === 'POST' ? $params : null,
+                'ignore_errors'    => true
             ),
             'ssl' => array(
                 'verify_peer'  => true,
