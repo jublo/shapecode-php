@@ -1,7 +1,7 @@
 <?php
 
 /**
- * A Shapeways API client in PHP.
+ * A Shapeways API library in PHP.
  *
  * @package   shapecode
  * @version   1.1.0-dev
@@ -34,7 +34,7 @@ unset($i);
 unset($id);
 
 /**
- * A Shapeways API client in PHP.
+ * A Shapeways API library in PHP.
  *
  * @package shapecode
  * @subpackage shapecode-php
@@ -87,14 +87,30 @@ class Shapecode
     protected $_version = '1.1.0-dev';
 
     /**
+     * Auto-detect cURL absence
+     */
+    protected $_use_curl = true;
+
+    /**
      * Request timeout
      */
-    protected $_timeout;
+    protected $_timeout = 2000;
 
     /**
      * Connection timeout
      */
-    protected $_connectionTimeout;
+    protected $_connectionTimeout = 5000;
+
+    /**
+     *
+     * Class constructor
+     *
+     */
+    public function __construct()
+    {
+        // Pre-define $_use_curl depending on cURL availability
+        $this->setUseCurl(function_exists('curl_init'));
+    }
 
     /**
      * Returns singleton class instance
@@ -146,6 +162,22 @@ class Shapecode
     {
         $this->_oauth_token        = $token;
         $this->_oauth_token_secret = $secret;
+    }
+
+    /**
+     * Sets if Shapecode should use cURL
+     *
+     * @param bool $use_curl Request uses cURL or not
+     *
+     * @return void
+     */
+    public function setUseCurl($use_curl)
+    {
+        if ($use_curl && ! function_exists('curl_init')) {
+            throw new \Exception('To use cURL, the PHP curl extension must be available.');
+        }
+
+        $this->_use_curl = (bool) $use_curl;
     }
 
     /**
@@ -263,8 +295,14 @@ class Shapecode
         if (count($params) > 0) {
             if (is_array($params[0])) {
                 $apiparams = $params[0];
+                if (! is_array($apiparams)) {
+                    $apiparams = array();
+                }
             } else {
                 parse_str($params[0], $apiparams);
+                if (! is_array($apiparams)) {
+                    $apiparams = array();
+                }
                 // remove auto-added slashes if on magic quotes steroids
                 if (get_magic_quotes_gpc()) {
                     foreach($apiparams as $key => $value) {
@@ -290,6 +328,11 @@ class Shapecode
             }
         }
 
+        // reset token when requesting a new token (causes 401 for signature error on 2nd+ requests)
+        if ($fn === 'oauth_requestToken') {
+            $this->setToken(null, null);
+        }
+
         // map function name to API method
         $method = '';
 
@@ -304,8 +347,8 @@ class Shapecode
 
         // replace AA by URL parameters
         $method_template = $method;
-        $match   = array();
-        if (preg_match('/[A-Z]{2,}/', $method, $match)) {
+        $match           = array();
+        if (preg_match('/[A-Z_]{2,}/', $method, $match)) {
             foreach ($match as $param) {
                 $param_l = strtolower($param);
                 if (substr($param_l, -2) === 'id') {
@@ -350,9 +393,35 @@ class Shapecode
         return $this->_callApi(
             $httpmethod,
             $method,
-            $method_template,
             $apiparams
         );
+    }
+
+    /**
+     * Check if there were any SSL certificate errors
+     *
+     * @param int $validation_result The curl error number
+     *
+     * @return void
+     */
+    protected function _validateSslCertificate($validation_result)
+    {
+        if (in_array(
+                $validation_result,
+                array(
+                    CURLE_SSL_CERTPROBLEM,
+                    CURLE_SSL_CACERT,
+                    CURLE_SSL_CACERT_BADFILE,
+                    CURLE_SSL_CRL_BADFILE,
+                    CURLE_SSL_ISSUER_ERROR
+                )
+            )
+        ) {
+            throw new \Exception(
+                'Error ' . $validation_result
+                . ' while validating the Shapeways API certificate.'
+            );
+        }
     }
 
     /**
@@ -366,7 +435,7 @@ class Shapecode
      *
      * @return mixed The encoded data
      */
-    private function _url($data)
+    protected function _url($data)
     {
         if (is_array($data)) {
             return array_map(array(
@@ -401,16 +470,25 @@ class Shapecode
      *
      * @return string The hash
      */
-    private function _sha1($data)
+    protected function _sha1($data)
     {
-        if (self::$_oauth_consumer_secret == null) {
+        if (self::$_oauth_consumer_secret === null) {
             throw new Exception('To generate a hash, the consumer secret must be set.');
         }
         if (! function_exists('hash_hmac')) {
             throw new Exception('To generate a hash, the PHP hash extension must be available.');
         }
-        return base64_encode(hash_hmac('sha1', $data, self::$_oauth_consumer_secret . '&'
-            . ($this->_oauth_token_secret != null ? $this->_oauth_token_secret : ''), true));
+        return base64_encode(hash_hmac(
+            'sha1',
+            $data,
+            self::$_oauth_consumer_secret
+            . '&'
+            . ($this->_oauth_token_secret != null
+                ? $this->_oauth_token_secret
+                : ''
+            ),
+            true
+        ));
     }
 
     /**
@@ -434,19 +512,20 @@ class Shapecode
      * @param string          $httpmethod Usually either 'GET' or 'POST' or 'DELETE'
      * @param string          $method     The API method to call
      * @param array  optional $params     The API call parameters, associative
+     * @param bool   optional append_to_get Whether to append the OAuth params to GET
      *
      * @return string Authorization HTTP header
      */
-    protected function _sign($httpmethod, $method, $params = array())
+    protected function _sign($httpmethod, $method, $params = array(), $append_to_get = false)
     {
-        if (self::$_oauth_consumer_key == null) {
+        if (self::$_oauth_consumer_key === null) {
             throw new Exception('To generate a signature, the consumer key must be set.');
         }
         $sign_params      = array(
-            'consumer_key' => self::$_oauth_consumer_key,
-            'version' => '1.0',
-            'timestamp' => time(),
-            'nonce' => $this->_nonce(),
+            'consumer_key'     => self::$_oauth_consumer_key,
+            'version'          => '1.0',
+            'timestamp'        => time(),
+            'nonce'            => $this->_nonce(),
             'signature_method' => 'HMAC-SHA1'
         );
         $sign_base_params = array();
@@ -468,13 +547,20 @@ class Shapecode
         $sign_base_string = substr($sign_base_string, 0, -1);
         $signature        = $this->_sha1($httpmethod . '&' . $this->_url($method) . '&' . $this->_url($sign_base_string));
 
-        $params = array_merge($oauth_params, array(
-            'oauth_signature' => $signature
-        ));
-        ksort($params);
-        $authorization = 'Authorization: OAuth ';
-        foreach ($params as $key => $value) {
-            $authorization .= $key . '="' . $this->_url($value) . '", ';
+        $params = $append_to_get ? $sign_base_params : $oauth_params;
+        $params['oauth_signature'] = $signature;
+        $keys = $params;
+        ksort($keys);
+        if ($append_to_get) {
+            $authorization = '';
+            foreach ($keys as $key => $value) {
+                $authorization .= $key . '="' . $this->_url($value) . '", ';
+            }
+            return authorization.substring(0, authorization.length - 1);
+        }
+        $authorization = 'OAuth ';
+        foreach ($keys as $key => $value) {
+            $authorization .= $key . "=\"" . $this->_url($value) . "\", ";
         }
         return substr($authorization, 0, -2);
     }
@@ -487,10 +573,10 @@ class Shapecode
      *
      * @return string The HTTP method that should be used
      */
-    protected function _detectMethod($method, &$params)
+    protected function _detectMethod($method, $params)
     {
         // multi-HTTP method endpoints
-        switch($method) {
+        switch ($method) {
             case 'orders/cart':
                 // detect orders/cart from number of params
                 $method = count($params) > 0 ? $method . ' (POST)' : $method;
@@ -568,12 +654,11 @@ class Shapecode
     /**
      * Builds the complete API endpoint url
      *
-     * @param string $method           The API method to call
-     * @param string $method_template  The API method template to call
+     * @param string $method The API method to call
      *
      * @return string The URL to send the request to
      */
-    protected function _getEndpoint($method, $method_template)
+    protected function _getEndpoint($method)
     {
         $url = sprintf(self::$_endpoint, $method);
         // special trailing slash for this method
@@ -584,17 +669,40 @@ class Shapecode
     }
 
     /**
-     * Calls the API using cURL
+     * Calls the API
      *
      * @param string          $httpmethod      The HTTP method to use for making the request
      * @param string          $method          The API method to call
-     * @param string          $method_template The templated API method to call
      * @param array  optional $params          The parameters to send along
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApi($httpmethod, $method, $method_template, $params = array())
+    protected function _callApi($httpmethod, $method, $params = array())
+    {
+        if (! $app_only_auth
+            && $this->_oauth_token === null
+            && substr($method, 0, 5) !== 'oauth'
+        ) {
+                throw new \Exception('To call this API, the OAuth access token must be set.');
+        }
+        if ($this->_use_curl) {
+            return $this->_callApiCurl($httpmethod, $method, $params, $multipart, $app_only_auth, $internal);
+        }
+        return $this->_callApiNoCurl($httpmethod, $method, $params, $multipart, $app_only_auth, $internal);
+    }
+
+    /**
+     * Calls the API using cURL
+     *
+     * @param string          $httpmethod    The HTTP method to use for making the request
+     * @param string          $method        The API method to call
+     * @param array  optional $params        The parameters to send along
+     *
+     * @return mixed The API reply, encoded in the set return_format
+     */
+
+    protected function _callApiCurl($httpmethod, $method, $params = array())
     {
         if (! function_exists('curl_init')) {
             throw new Exception('To make API requests, the PHP curl extension must be available.');
@@ -602,19 +710,21 @@ class Shapecode
         if (! function_exists('json_encode')) {
             throw new Exception('To make API requests, the PHP json extension must be available.');
         }
-        $url = $this->_getEndpoint($method, $method_template);
-        $ch  = false;
+        $authorization   = null;
+        $url             = $this->_getEndpoint($method);
+        $request_headers = array();
         if ($httpmethod === 'GET') {
-            $url_with_params = $url;
-            if (count($params) > 0) {
-                $url_with_params .= '?' . http_build_query($params);
+            if (json_encode($params) !== '{}'
+                && json_encode($params) !== '[]'
+            ) {
+                $url .= '?' . http_build_query($params);
             }
             $authorization = $this->_sign($httpmethod, $url, $params);
-            $ch = curl_init($url_with_params);
+            $ch = curl_init($url);
         } else {
             if (substr($method_template, 0, 7) === 'oauth1/') {
                 $authorization = $this->_sign($httpmethod, $url, $params);
-                $params = http_build_query($params);
+                $params        = http_build_query($params);
             } else {
                 $authorization = $this->_sign($httpmethod, $url, array());
                 // load files, if any
@@ -634,7 +744,7 @@ class Shapecode
         }
         $request_headers = array();
         if (isset($authorization)) {
-            $request_headers[] = $authorization;
+            $request_headers[] = 'Authorization: ' . $authorization;
             $request_headers[] = 'Expect:';
         }
 
@@ -644,7 +754,7 @@ class Shapecode
         curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CAINFO, dirname(__FILE__) . '/cacert.pem');
+        curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem');
 
         if (isset($this->_timeout)) {
             curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);
@@ -654,30 +764,116 @@ class Shapecode
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $this->_connectionTimeout);
         }
 
-        $reply = curl_exec($ch);
+        $result = curl_exec($ch);
 
         // certificate validation results
         $validation_result = curl_errno($ch);
-        if (in_array(
-                $validation_result,
-                array(
-                    CURLE_SSL_CERTPROBLEM,
-                    CURLE_SSL_CACERT,
-                    CURLE_SSL_CACERT_BADFILE,
-                    CURLE_SSL_CRL_BADFILE,
-                    CURLE_SSL_ISSUER_ERROR
-                )
-            )
-        ) {
-            throw new Exception('Error ' . $validation_result . ' while validating the Shapeways API certificate.');
-        }
+        $this->_validateSslCertificate($validation_result);
 
         $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $reply = $this->_parseApiReply($method_template, $reply);
-        if ($this->_return_format == SHAPECODE_RETURNFORMAT_OBJECT) {
+        $reply      = $this->_parseApiReply($result);
+        if ($this->_return_format === SHAPECODE_RETURNFORMAT_OBJECT) {
             $reply->httpstatus = $httpstatus;
-        } elseif ($this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY) {
+        } elseif ($this->_return_format === SHAPECODE_RETURNFORMAT_ARRAY) {
             $reply['httpstatus'] = $httpstatus;
+        }
+        return $reply;
+    }
+
+    /**
+     * Calls the API without cURL
+     *
+     * @param string          $httpmethod      The HTTP method to use for making the request
+     * @param string          $method          The API method to call
+     * @param array  optional $params          The parameters to send along
+     *
+     * @return mixed The API reply, encoded in the set return_format
+     */
+
+    protected function _callApiNoCurl($httpmethod, $method, $params = array())
+    {
+        if (! function_exists('json_encode')) {
+            throw new Exception('To make API requests, the PHP json extension must be available.');
+        }
+        $authorization = null;
+        $url           = $this->_getEndpoint($method);
+        $hostname      = parse_url($url, PHP_URL_HOST);
+        $request_headers = array();
+        if ($httpmethod === 'GET') {
+            if (json_encode($params) !== '{}'
+                && json_encode($params) !== '[]'
+            ) {
+                $url .= '?' . http_build_query($params);
+            }
+            $authorization = $this->_sign($httpmethod, $url, $params);
+            $ch = curl_init($url);
+        } else {
+            if (substr($method_template, 0, 7) === 'oauth1/') {
+                $authorization = $this->_sign($httpmethod, $url, $params);
+                $params        = http_build_query($params);
+            } else {
+                $authorization = $this->_sign($httpmethod, $url, array());
+                // load files, if any
+                $this->_encodeFiles($method_template, $params);
+                $params = json_encode($params);
+                $request_headers[] = 'Content-Length: ' . strlen($params);
+                $request_headers[] = 'Content-Type: application/json';
+            }
+            /*
+            $ch = curl_init($url);
+            if ($httpmethod === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            } else {
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            }
+            */
+        }
+        if (isset($authorization)) {
+            $request_headers[] = 'Authorization: ' . $authorization;
+            $request_headers[] = 'Expect:';
+        }
+
+        $context = stream_context_create(array(
+            'http' => array(
+                'method'           => $httpmethod,
+                'protocol_version' => '1.1',
+                'header'           => implode("\r\n", $request_headers),
+                'timeout'          => $this->_timeout / 1000,
+                'content'          => $httpmethod === 'POST' ? $params : null
+            ),
+            'ssl' => array(
+                'verify_peer'  => true,
+                'cafile'       => __DIR__ . '/cacert.pem',
+                'verify_depth' => 5,
+                'peer_name'    => $hostname
+            )
+        ));
+
+        $reply   = @file_get_contents($url, false, $context);
+        $headers = $http_response_header;
+        $result  = '';
+        foreach ($headers as $header) {
+            $result .= $header . "\r\n";
+        }
+        $result .= "\r\n" . $reply;
+
+        // find HTTP status
+        $httpstatus = '500';
+        $match      = array();
+        if (preg_match('/HTTP\/\d\.\d (\d{3})/', $headers[0], $match)) {
+            $httpstatus = $match[1];
+        }
+
+        $reply      = $this->_parseApiReply($result);
+        switch ($this->_return_format) {
+            case SHAPECODE_RETURNFORMAT_ARRAY:
+                $reply['httpstatus'] = $httpstatus;
+                break;
+            case SHAPECODE_RETURNFORMAT_OBJECT:
+                $reply->httpstatus = $httpstatus;
+                break;
         }
         return $reply;
     }
@@ -685,19 +881,21 @@ class Shapecode
     /**
      * Parses the API reply to encode it in the set return_format
      *
-     * @param string $method The method that has been called
-     * @param string $reply  The actual reply, JSON-encoded or URL-encoded
+     * @param string $reply The actual reply, JSON-encoded or URL-encoded
      *
      * @return array|object The parsed reply
      */
-    protected function _parseApiReply($method, $reply)
+    protected function _parseApiReply($reply)
     {
         // split headers and body
         $headers = array();
         $reply = explode("\r\n\r\n", $reply, 4);
 
         // check if using proxy
-        if (substr($reply[0], 0, 35) === 'HTTP/1.1 200 Connection Established') {
+        $proxy_strings = array();
+        $proxy_strings[strtolower('HTTP/1.0 200 Connection Established')] = true;
+        $proxy_strings[strtolower('HTTP/1.1 200 Connection Established')] = true;
+        if (array_key_exists(strtolower(substr($reply[0], 0, 35)), $proxy_strings)) {
             array_shift($reply);
         } elseif (count($reply) > 2) {
             $headers = array_shift($reply);
@@ -723,7 +921,7 @@ class Shapecode
             $reply = '';
         }
 
-        $need_array = $this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY;
+        $need_array = $this->_return_format === SHAPECODE_RETURNFORMAT_ARRAY;
         if ($reply == '[]') {
             switch ($this->_return_format) {
                 case SHAPECODE_RETURNFORMAT_ARRAY:
@@ -734,7 +932,6 @@ class Shapecode
                     return new stdClass;
             }
         }
-        $parsed = array();
         if (! $parsed = json_decode($reply, $need_array)) {
             if ($reply) {
                 if (stripos($reply, '<' . '?xml version="1.0" encoding="UTF-8"?' . '>') === 0) {
