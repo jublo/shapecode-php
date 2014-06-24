@@ -1,0 +1,28 @@
+{
+  "name": "codebird-php",
+  "version": "1.1.0",
+  "homepage": "http://www.jublo.net/projects/shapecode/php",
+  "authors": [
+    "Joshua Atkins <joshua.atkins@jublo.net>",
+    "J.M. <jm@jublo.net>"
+  ],
+  "description": "A Shapeways API library in PHP.",
+  "main": "src/shapeways.php",
+  "moduleType": [],
+  "keywords": [
+    "Shapeways",
+    "API",
+    "printing",
+    "modeling",
+    "3D"
+  ],
+  "license": "LGPL-3.0+",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "private_shapeways_tokens.php",
+    "test",
+    "tests"
+  ]
+}
