@@ -732,13 +732,13 @@ class Shapecode
                 // load files, if any
                 $this->_encodeFiles($method, $params);
                 $params = json_encode($params);
-                $request_headers[] = 'Content-Length: ' . strlen($params);
-                $request_headers[] = 'Content-Type: application/json';
             }
             $ch = curl_init($url);
             if ($httpmethod === 'POST') {
                 curl_setopt($ch, CURLOPT_POST, 1);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+                $request_headers[] = 'Content-Length: ' . strlen($params);
+                $request_headers[] = 'Content-Type: application/json';
             } else {
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
@@ -819,19 +819,11 @@ class Shapecode
                 // load files, if any
                 $this->_encodeFiles($method_template, $params);
                 $params = json_encode($params);
-                $request_headers[] = 'Content-Length: ' . strlen($params);
-                $request_headers[] = 'Content-Type: application/json';
+                if ($httpmethod === 'POST') {
+                    $request_headers[] = 'Content-Length: ' . strlen($params);
+                    $request_headers[] = 'Content-Type: application/json';
+                }
             }
-            /*
-            $ch = curl_init($url);
-            if ($httpmethod === 'POST') {
-                curl_setopt($ch, CURLOPT_POST, 1);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-            } else {
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-            }
-            */
         }
         if (isset($authorization)) {
             $request_headers[] = 'Authorization: ' . $authorization;
