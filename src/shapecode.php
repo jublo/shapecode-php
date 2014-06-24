@@ -393,6 +393,7 @@ class Shapecode
         return $this->_callApi(
             $httpmethod,
             $method,
+            $method_template,
             $apiparams
         );
     }
@@ -611,12 +612,12 @@ class Shapecode
      * Detect filenames in upload parameters,
      * encode loaded files
      *
-     * @param string       $method  The API method to call
-     * @param array  byref $params  The parameters to send along
+     * @param string       $method_template  Templated API method to call
+     * @param array  byref $params           Parameters to send along
      *
      * @return void
      */
-    protected function _encodeFiles($method, &$params)
+    protected function _encodeFiles($method_template, &$params)
     {
         // only check specific parameters
         $possible_files = array(
@@ -671,38 +672,39 @@ class Shapecode
     /**
      * Calls the API
      *
-     * @param string          $httpmethod      The HTTP method to use for making the request
-     * @param string          $method          The API method to call
-     * @param array  optional $params          The parameters to send along
+     * @param string          $httpmethod      HTTP method to use for making the request
+     * @param string          $method          API method to call
+     * @param string          $method_template Templated API method to call
+     * @param array  optional $params          parameters to send along
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApi($httpmethod, $method, $params = array())
+    protected function _callApi($httpmethod, $method, $method_template, $params = array())
     {
-        if (! $app_only_auth
-            && $this->_oauth_token === null
+        if ($this->_oauth_token === null
             && substr($method, 0, 5) !== 'oauth'
         ) {
                 throw new \Exception('To call this API, the OAuth access token must be set.');
         }
         if ($this->_use_curl) {
-            return $this->_callApiCurl($httpmethod, $method, $params, $multipart, $app_only_auth, $internal);
+            return $this->_callApiCurl($httpmethod, $method, $method_template, $params);
         }
-        return $this->_callApiNoCurl($httpmethod, $method, $params, $multipart, $app_only_auth, $internal);
+        return $this->_callApiNoCurl($httpmethod, $method, $method_template, $params);
     }
 
     /**
      * Calls the API using cURL
      *
-     * @param string          $httpmethod    The HTTP method to use for making the request
-     * @param string          $method        The API method to call
-     * @param array  optional $params        The parameters to send along
+     * @param string          $httpmethod      HTTP method to use for making the request
+     * @param string          $method          API method to call
+     * @param string          $method_template Templated API method to call
+     * @param array  optional $params          parameters to send along
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApiCurl($httpmethod, $method, $params = array())
+    protected function _callApiCurl($httpmethod, $method, $method_template, $params = array())
     {
         if (! function_exists('curl_init')) {
             throw new Exception('To make API requests, the PHP curl extension must be available.');
@@ -722,13 +724,13 @@ class Shapecode
             $authorization = $this->_sign($httpmethod, $url, $params);
             $ch = curl_init($url);
         } else {
-            if (substr($method_template, 0, 7) === 'oauth1/') {
+            if (substr($method, 0, 7) === 'oauth1/') {
                 $authorization = $this->_sign($httpmethod, $url, $params);
                 $params        = http_build_query($params);
             } else {
                 $authorization = $this->_sign($httpmethod, $url, array());
                 // load files, if any
-                $this->_encodeFiles($method_template, $params);
+                $this->_encodeFiles($method, $params);
                 $params = json_encode($params);
                 $request_headers[] = 'Content-Length: ' . strlen($params);
                 $request_headers[] = 'Content-Type: application/json';
@@ -783,14 +785,15 @@ class Shapecode
     /**
      * Calls the API without cURL
      *
-     * @param string          $httpmethod      The HTTP method to use for making the request
-     * @param string          $method          The API method to call
-     * @param array  optional $params          The parameters to send along
+     * @param string          $httpmethod      HTTP method to use for making the request
+     * @param string          $method          API method to call
+     * @param string          $method_template Templated API method to call
+     * @param array  optional $params          parameters to send along
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApiNoCurl($httpmethod, $method, $params = array())
+    protected function _callApiNoCurl($httpmethod, $method, $method_template, $params = array())
     {
         if (! function_exists('json_encode')) {
             throw new Exception('To make API requests, the PHP json extension must be available.');
