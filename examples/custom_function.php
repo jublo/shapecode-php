@@ -86,9 +86,7 @@ function upload3DFile(
     if (is_string($tags)) {
         $tags = explode(',', $tags);
         // remove leading and trailing spaces
-        for ($i = 0; $i < count($tags); $i++) {
-            $tags[$i] = trim($tags[$i]);
-        }
+        array_walk($tags, function(&$val){$val = trim($val);});
     }
 
     // validate default material
