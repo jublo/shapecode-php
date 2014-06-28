@@ -716,12 +716,12 @@ class Shapecode
         $url             = $this->_getEndpoint($method);
         $request_headers = array();
         if ($httpmethod === 'GET') {
+            $authorization = $this->_sign($httpmethod, $url, $params);
             if (json_encode($params) !== '{}'
                 && json_encode($params) !== '[]'
             ) {
                 $url .= '?' . http_build_query($params);
             }
-            $authorization = $this->_sign($httpmethod, $url, $params);
             $ch = curl_init($url);
         } else {
             if (substr($method, 0, 7) === 'oauth1/') {
@@ -803,13 +803,12 @@ class Shapecode
         $hostname      = parse_url($url, PHP_URL_HOST);
         $request_headers = array();
         if ($httpmethod === 'GET') {
+            $authorization = $this->_sign($httpmethod, $url, $params);
             if (json_encode($params) !== '{}'
                 && json_encode($params) !== '[]'
             ) {
                 $url .= '?' . http_build_query($params);
             }
-            $authorization = $this->_sign($httpmethod, $url, $params);
-            $ch = curl_init($url);
         } else {
             if (substr($method_template, 0, 7) === 'oauth1/') {
                 $authorization = $this->_sign($httpmethod, $url, $params);
