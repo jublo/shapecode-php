@@ -31,13 +31,13 @@ function upload3DFile(
     $access_token_secret
 )
 {
-    // materials as of 2014-02-16
+    // materials as of 2015-03-08
     $all_materials = (array) json_decode('
         {
             "White Strong & Flexible": 6,
             "White Strong & Flexible Polished": 62,
-            "Orange Strong & Flexible Polished": 95,
             "Green Strong & Flexible Polished": 94,
+            "Orange Strong & Flexible Polished": 95,
             "Yellow Strong & Flexible Polished": 93,
             "Black Strong & Flexible": 25,
             "Red Strong & Flexible Polished": 76,
@@ -52,21 +52,32 @@ function upload3DFile(
             "Transparent Detail": 4,
             "Full Color Sandstone": 26,
             "Sandstone": 27,
-            "Glazed Ceramics": 63,
-            "Gloss Black Ceramics": 64,
-            "Satin Black Ceramics": 70,
-            "Pastel Yellow Ceramics": 74,
-            "Eggshell Blue Ceramics": 72,
-            "Avocado Green Ceramics": 73,
-            "Raw Brass": 84,
             "Raw Bronze": 86,
-            "Polished Brass": 85,
             "14K Gold": 91,
-            "Gold Plated Brass": 83,
-            "Polished Grey Steel": 90,
+            "14k Gold Plated": 110,
+            "Rhodium Plated": 113,
+            "Gloss Cobalt Blue Porcelain": 106,
             "Matte Black Steel": 89,
+            "18k Gold Plated": 112,
             "Polished Bronze": 87,
+            "Raw Brass": 84,
+            "Gloss Celadon Green Porcelain": 104,
+            "Polished Brass": 85,
             "Polished Nickel Steel": 88,
+            "14k Rose Gold Plated": 111,
+            "Polished Grey Steel": 90,
+            "Gloss Oribe Green Porcelain": 105,
+            "Gloss Yellow Porcelain": 108,
+            "14k Rose Gold": 96,
+            "Gloss Red Porcelain": 109,
+            "Gloss Blue Porcelain": 107,
+            "14k White Gold": 97,
+            "Platinum": 99,
+            "18k Gold": 98,
+            "Full Color Plastic": 100,
+            "Matte Black Porcelain": 101,
+            "Gloss Black Porcelain": 102,
+            "Gloss White Porcelain": 103,
             "Premium Silver": 81,
             "Polished Silver": 54,
             "Raw Silver": 53,
@@ -164,4 +175,3 @@ if ($upload_data->result === 'success') {
     // maybe store the modelId in your database?
     echo $upload_data->modelId;
 }
-
