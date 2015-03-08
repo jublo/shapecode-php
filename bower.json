@@ -1,6 +1,6 @@
 {
   "name": "codebird-php",
-  "version": "1.1.0-rc.1",
+  "version": "1.1.0",
   "homepage": "http://www.jublo.net/projects/shapecode/php",
   "authors": [
     "Joshua Atkins <joshua.atkins@jublo.net>",
@@ -21,6 +21,7 @@
     "**/.*",
     "node_modules",
     "bower_components",
+    "examples/shapecode-demo/.*",
     "private_shapeways_tokens.php",
     "test",
     "tests"
