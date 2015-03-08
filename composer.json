@@ -9,7 +9,7 @@
         "3D"
     ],
     "homepage": "http://www.jublo.net/projects/shapecode/php",
-    "license": "LGPL-3.0",
+    "license": "LGPL-3.0+",
     "authors": [
         {
             "name": "Joshua Atkins",
