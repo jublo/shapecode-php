@@ -2,10 +2,10 @@ shapecode-php
 =============
 *A Shapeways API library in PHP.*
 
-Copyright (C) 2014 Jublo IT Solutions <support@jublo.net>
+Copyright (C) 2014-2015 Jublo Solutions <support@jublo.net>
 
 This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
+it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
@@ -17,20 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-### Versions
-
-- PHP: https://github.com/jublonet/shapecode-php
-
 ### Requirements
 
-- PHP 5.2.0 or higher
-- CURL extension
+- PHP 5.5.0 or higher
 - JSON extension
 - OpenSSL extension
 
 
-1. Authentication
------------------
+Authentication
+--------------
 
 To authenticate your API requests on behalf of a certain Shapeways user
 (following OAuth 1.0a), take a look at these steps:
@@ -90,8 +85,8 @@ if (! isset($_SESSION['oauth_token'])) {
 $sc->setToken($_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
 ```
 
-2. Usage examples
------------------
+Usage examples
+--------------
 
 When you have an access token, calling the API is simple:
 
@@ -142,8 +137,8 @@ $params = array(
 $reply = $sc->models($params); // required HTTP POST is auto-detected
 ```
 
-3. Mapping API methods to Shapecode function calls
---------------------------------------------------
+Mapping API methods to Shapecode function calls
+-----------------------------------------------
 
 As you can see from the last example, there is a general way how the Shapeways
 API methods map to Shapecode function calls. The general rules are:
@@ -166,8 +161,8 @@ API methods map to Shapecode function calls. The general rules are:
     Example:
     - ```materials/{materialId}/v1``` maps to ```Shapecode::materials_MATERIALID('materialId=73')```.
 
-4. HTTP methods (GET, POST, DELETE etc.)
-----------------------------------------
+HTTP methods (GET, POST, DELETE etc.)
+-------------------------------------
 
 Never care about which HTTP method (verb) to use when calling a Shapeways API.
 Shapecode is intelligent enough to find out on its own.
@@ -178,8 +173,8 @@ The only exception to the above is the `DELETE models/{modelId}` method.
 To call it, use the `delete=1` parameter. It will trigger the DELETE method,
 but is not sent to the API.
 
-5. Response codes
------------------
+Response codes
+--------------
 
 The HTTP response code that the API gave is included in any return values.
 You can find it within the return object’s ```httpstatus``` property.
@@ -187,23 +182,8 @@ You can find it within the return object’s ```httpstatus``` property.
 To know whether your API call was successful, check the ```$reply->result``` string,
 which either reads ```success``` or ```failure```.
 
-### 5.1 Dealing with rate-limits
-
-Basically, Shapecode leaves it up to you to handle the Shapeways rate limit.
-The library returns the response HTTP status code, so you can detect rate limits.
-
-I suggest you to check if the ```$reply->httpstatus``` property is ```400```
-and check with the Shapeways API to find out if you are currently being
-rate-limited.
-
-The current rate limit is returned in the ```api/v1/``` API method,
-callable with ```$sc->api()```.
-
-See the [Rate Limiting FAQ](https://dev.twitter.com/docs/rate-limiting-faq)
-for more information.
-
-6. Return formats
------------------
+Return formats
+--------------
 The default return format for API calls is a PHP object.
 Upon your choice, you may also get PHP arrays directly:
 
@@ -218,10 +198,8 @@ To get a JSON string, set the corresponding return format:
 $sc->setReturnFormat(SHAPECODE_RETURNFORMAT_JSON);
 ```
 
-Support for getting a SimpleXML object is planned.
-
-7. Using multiple Shapecode instances
-------------------------------------
+Using multiple Shapecode instances
+----------------------------------
 
 By default, Shapecode works with just one instance. This programming paradigma is
 called a *singleton*.
@@ -246,10 +224,9 @@ multiple Shapecode instances, while the OAuth request and access tokens with the
 secrets are *not* shared.
 
 How Do I…?
-==========
+----------
 
-…walk through paged results?
-----------------------------
+### …walk through paged results?
 
 The Shapeways API utilizes a technique called ‘paging’ for
 large result sets. Pages separates results into pages of no more than
@@ -278,8 +255,7 @@ It might make sense to use the pages in a loop.  Watch out, though,
 not to send more than the allowed number of requests
 per rate-limit timeframe, or else you will hit your rate-limit.
 
-…know what cacert.pem is for?
------------------------------
+### …know what cacert.pem is for?
 
 Connections to the Shapeways API are done over a secured SSL connection.
 Shapecode-php checks if the Shapeways API server has a valid SSL certificate.
@@ -288,14 +264,30 @@ The cacert.pem file contains a list of all public certificates for root
 certificate authorities. You can find more information about this file
 at http://curl.haxx.se/docs/caextract.html.
 
-…set the timeout for requests to the Shapeways API?
--------------------------------------------------
+### …set the timeout for requests to the Shapeways API?
 
-For connecting to Shapeways, Shapecode uses the cURL library.
+For connecting to Shapeways, Shapecode uses the cURL library, if available.
 You can specify both the connection timeout and the request timeout,
 in milliseconds:
 
 ```php
 $sc->setConnectionTimeout(2000);
 $sc->setTimeout(5000);
+```
+
+If you don't specify the timeout, Shapecode uses these values:
+
+- connection time = 5000 ms = 5 s
+- timeout = 2000 ms = 2 s
+
+### …disable cURL?
+
+Shapecode automatically detects whether you have the PHP cURL extension enabled.
+If not, the library will try to connect to the Shapeways API via socket.
+For this to work, the PHP setting `allow_url_fopen` must be enabled.
+
+You may also manually disable cURL.  Use the following call:
+
+```php
+$sc->setUseCurl(false);
 ```

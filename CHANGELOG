@@ -1,5 +1,16 @@
 shapecode-php - changelog
 =========================
 
+1.1.0 (2015-12-04)
++ Better Proxy HTTP status detection
++ Don't require cURL, allow stream connections too
++ Use default timeout
++ Add composer/installers to allow install path changes
++ Update materials list
++ #13 Orders API
++ #12 Allow for multiple parameters in templated methods
+  by replacing preg_match with preg_match_all
++ Update cacert.pem
+
 1.0.0 (2014-02-27)
 Initial release

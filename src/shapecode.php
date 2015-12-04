@@ -1,25 +1,14 @@
 <?php
 
 /**
- * A Shapeways API client in PHP.
+ * A Shapeways API library in PHP.
  *
- * @package shapecode
- * @version 1.0.0
- * @author Jublo IT Solutions <support@jublo.net>
- * @copyright 2014 Jublo IT Solutions <support@jublo.net>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * @package   shapecode
+ * @version   1.1.0
+ * @author    Jublo Solutions <support@jublo.net>
+ * @copyright 2014-2015 Jublo Solutions <support@jublo.net>
+ * @license   http://opensource.org/licenses/LGPL-3.0 GNU Lesser General Public License 3.0
+ * @link      https://github.com/jublonet/shapecode-php
  */
 
 /**
@@ -30,13 +19,13 @@ foreach ($constants as $i => $id) {
     $id = 'SHAPECODE_RETURNFORMAT_' . $id;
     defined($id) or define($id, $i);
 }
-$constants = array(
+$constants = [
     'CURLE_SSL_CERTPROBLEM' => 58,
     'CURLE_SSL_CACERT' => 60,
     'CURLE_SSL_CACERT_BADFILE' => 77,
     'CURLE_SSL_CRL_BADFILE' => 82,
     'CURLE_SSL_ISSUER_ERROR' => 83
-);
+];
 foreach ($constants as $id => $i) {
     defined($id) or define($id, $i);
 }
@@ -45,7 +34,7 @@ unset($i);
 unset($id);
 
 /**
- * A Shapeways API client in PHP.
+ * A Shapeways API library in PHP.
  *
  * @package shapecode
  * @subpackage shapecode-php
@@ -90,22 +79,38 @@ class Shapecode
     /**
      * The file formats that Shapeways accepts as image uploads
      */
-    protected $_supported_media_files = array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG);
+    protected $_supported_media_files = [IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG];
 
     /**
      * The current Shapecode version
      */
-    protected $_version = '1.0.0';
+    protected $_version = '1.1.0';
+
+    /**
+     * Auto-detect cURL absence
+     */
+    protected $_use_curl = true;
 
     /**
      * Request timeout
      */
-    protected $_timeout;
+    protected $_timeout = 2000;
 
     /**
      * Connection timeout
      */
-    protected $_connectionTimeout;
+    protected $_connectionTimeout = 5000;
+
+    /**
+     *
+     * Class constructor
+     *
+     */
+    public function __construct()
+    {
+        // Pre-define $_use_curl depending on cURL availability
+        $this->setUseCurl(function_exists('curl_init'));
+    }
 
     /**
      * Returns singleton class instance
@@ -160,6 +165,22 @@ class Shapecode
     }
 
     /**
+     * Sets if Shapecode should use cURL
+     *
+     * @param bool $use_curl Request uses cURL or not
+     *
+     * @return void
+     */
+    public function setUseCurl($use_curl)
+    {
+        if ($use_curl && ! function_exists('curl_init')) {
+            throw new \Exception('To use cURL, the PHP curl extension must be available.');
+        }
+
+        $this->_use_curl = (bool) $use_curl;
+    }
+
+    /**
      * Sets request timeout in milliseconds
      *
      * @param int $timeout Request timeout in milliseconds
@@ -198,15 +219,15 @@ class Shapecode
     }
 
     /**
-     * Get allowed API methods, sorted by GET or POST
-     * Watch out for multiple-method "account/settings"!
+     * Get allowed API methods, sorted by HTTP method
+     * Watch out for multiple-methods!
      *
      * @return array $apimethods
      */
     public function getApiMethods()
     {
-        static $apimethods = array(
-            'GET' => array(
+        static $apimethods = [
+            'GET' => [
                 // API
                 'api',
 
@@ -229,9 +250,13 @@ class Shapecode
 
                 // Category
                 'categories',
-                'categories/{categoryId}'
-            ),
-            'POST' => array(
+                'categories/{categoryId}',
+
+                // Orders
+                'orders',
+                'orders/{orderId}'
+            ],
+            'POST' => [
                 // OAuth1
                 'oauth1/access_token',
                 'oauth1/request_token',
@@ -245,16 +270,22 @@ class Shapecode
                 'models/{modelId}/photos',
 
                 // Price
-                'price'
-            ),
-            'PUT' => array(
+                'price',
+
+                // Orders
+                'orders (POST)'
+            ],
+            'PUT' => [
                 // Models
-                'models/{modelId}/info (PUT)'
-            ),
-            'DELETE' => array(
+                'models/{modelId}/info (PUT)',
+
+                // Orders
+                '/orders/{orderId} (PUT)'
+            ],
+            'DELETE' => [
                 'models/{modelId} (DELETE)'
-            )
-        );
+            ]
+        ];
         return $apimethods;
     }
 
@@ -274,17 +305,13 @@ class Shapecode
         if (count($params) > 0) {
             if (is_array($params[0])) {
                 $apiparams = $params[0];
+                if (! is_array($apiparams)) {
+                    $apiparams = [];
+                }
             } else {
                 parse_str($params[0], $apiparams);
-                // remove auto-added slashes if on magic quotes steroids
-                if (get_magic_quotes_gpc()) {
-                    foreach($apiparams as $key => $value) {
-                        if (is_array($value)) {
-                            $apiparams[$key] = array_map('stripslashes', $value);
-                        } else {
-                            $apiparams[$key] = stripslashes($value);
-                        }
-                    }
+                if (! is_array($apiparams)) {
+                    $apiparams = [];
                 }
             }
         }
@@ -301,6 +328,11 @@ class Shapecode
             }
         }
 
+        // reset token when requesting a new token (causes 401 for signature error on 2nd+ requests)
+        if ($fn === 'oauth_requestToken') {
+            $this->setToken(null, null);
+        }
+
         // map function name to API method
         $method = '';
 
@@ -315,9 +347,10 @@ class Shapecode
 
         // replace AA by URL parameters
         $method_template = $method;
-        $match   = array();
-        if (preg_match('/[A-Z]{2,}/', $method, $match)) {
+        $match           = [];
+        if (preg_match_all('/[A-Z_]{2,}/', $method, $match)) {
             foreach ($match as $param) {
+                $param = $param[0];
                 $param_l = strtolower($param);
                 if (substr($param_l, -2) === 'id') {
                     $param_l = substr($param_l, 0, -2) . 'Id';
@@ -331,8 +364,8 @@ class Shapecode
                         $method_template = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method_template);
                     }
                     $method_template = str_replace(
-                        array('_id', '_version'),
-                        array('Id', 'Version'),
+                        ['_id', '_version'],
+                        ['Id', 'Version'],
                         $method_template
                     );
                     throw new Exception(
@@ -351,8 +384,8 @@ class Shapecode
             $method_template = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method_template);
         }
         $method_template = str_replace(
-            array('_id', '_version'),
-            array('Id', 'Version'),
+            ['_id', '_version'],
+            ['Id', 'Version'],
             $method_template
         );
 
@@ -367,6 +400,33 @@ class Shapecode
     }
 
     /**
+     * Check if there were any SSL certificate errors
+     *
+     * @param int $validation_result The curl error number
+     *
+     * @return void
+     */
+    protected function _validateSslCertificate($validation_result)
+    {
+        if (in_array(
+                $validation_result,
+                [
+                    CURLE_SSL_CERTPROBLEM,
+                    CURLE_SSL_CACERT,
+                    CURLE_SSL_CACERT_BADFILE,
+                    CURLE_SSL_CRL_BADFILE,
+                    CURLE_SSL_ISSUER_ERROR
+                ]
+            )
+        ) {
+            throw new \Exception(
+                'Error ' . $validation_result
+                . ' while validating the Shapeways API certificate.'
+            );
+        }
+    }
+
+    /**
      * Signing helpers
      */
 
@@ -377,29 +437,29 @@ class Shapecode
      *
      * @return mixed The encoded data
      */
-    private function _url($data)
+    protected function _url($data)
     {
         if (is_array($data)) {
-            return array_map(array(
+            return array_map([
                 $this,
                 '_url'
-            ), $data);
+            ], $data);
         } elseif (is_scalar($data)) {
-            return str_replace(array(
+            return str_replace([
                 '+',
                 '!',
                 '*',
                 "'",
                 '(',
                 ')'
-            ), array(
+            ], [
                 ' ',
                 '%21',
                 '%2A',
                 '%27',
                 '%28',
                 '%29'
-            ), rawurlencode($data));
+            ], rawurlencode($data));
         } else {
             return '';
         }
@@ -412,16 +472,25 @@ class Shapecode
      *
      * @return string The hash
      */
-    private function _sha1($data)
+    protected function _sha1($data)
     {
-        if (self::$_oauth_consumer_secret == null) {
+        if (self::$_oauth_consumer_secret === null) {
             throw new Exception('To generate a hash, the consumer secret must be set.');
         }
         if (! function_exists('hash_hmac')) {
             throw new Exception('To generate a hash, the PHP hash extension must be available.');
         }
-        return base64_encode(hash_hmac('sha1', $data, self::$_oauth_consumer_secret . '&'
-            . ($this->_oauth_token_secret != null ? $this->_oauth_token_secret : ''), true));
+        return base64_encode(hash_hmac(
+            'sha1',
+            $data,
+            self::$_oauth_consumer_secret
+            . '&'
+            . ($this->_oauth_token_secret != null
+                ? $this->_oauth_token_secret
+                : ''
+            ),
+            true
+        ));
     }
 
     /**
@@ -445,22 +514,23 @@ class Shapecode
      * @param string          $httpmethod Usually either 'GET' or 'POST' or 'DELETE'
      * @param string          $method     The API method to call
      * @param array  optional $params     The API call parameters, associative
+     * @param bool   optional append_to_get Whether to append the OAuth params to GET
      *
      * @return string Authorization HTTP header
      */
-    protected function _sign($httpmethod, $method, $params = array())
+    protected function _sign($httpmethod, $method, $params = [], $append_to_get = false)
     {
-        if (self::$_oauth_consumer_key == null) {
+        if (self::$_oauth_consumer_key === null) {
             throw new Exception('To generate a signature, the consumer key must be set.');
         }
-        $sign_params      = array(
-            'consumer_key' => self::$_oauth_consumer_key,
-            'version' => '1.0',
-            'timestamp' => time(),
-            'nonce' => $this->_nonce(),
+        $sign_params      = [
+            'consumer_key'     => self::$_oauth_consumer_key,
+            'version'          => '1.0',
+            'timestamp'        => time(),
+            'nonce'            => $this->_nonce(),
             'signature_method' => 'HMAC-SHA1'
-        );
-        $sign_base_params = array();
+        ];
+        $sign_base_params = [];
         foreach ($sign_params as $key => $value) {
             $sign_base_params['oauth_' . $key] = $this->_url($value);
         }
@@ -479,13 +549,20 @@ class Shapecode
         $sign_base_string = substr($sign_base_string, 0, -1);
         $signature        = $this->_sha1($httpmethod . '&' . $this->_url($method) . '&' . $this->_url($sign_base_string));
 
-        $params = array_merge($oauth_params, array(
-            'oauth_signature' => $signature
-        ));
-        ksort($params);
-        $authorization = 'Authorization: OAuth ';
-        foreach ($params as $key => $value) {
-            $authorization .= $key . '="' . $this->_url($value) . '", ';
+        $params = $append_to_get ? $sign_base_params : $oauth_params;
+        $params['oauth_signature'] = $signature;
+        $keys = $params;
+        ksort($keys);
+        if ($append_to_get) {
+            $authorization = '';
+            foreach ($keys as $key => $value) {
+                $authorization .= $key . '="' . $this->_url($value) . '", ';
+            }
+            return authorization.substring(0, authorization.length - 1);
+        }
+        $authorization = 'OAuth ';
+        foreach ($keys as $key => $value) {
+            $authorization .= $key . "=\"" . $this->_url($value) . "\", ";
         }
         return substr($authorization, 0, -2);
     }
@@ -501,9 +578,10 @@ class Shapecode
     protected function _detectMethod($method, &$params)
     {
         // multi-HTTP method endpoints
-        switch($method) {
+        switch ($method) {
             case 'orders/cart':
-                // detect orders/cart from number of params
+            case 'orders':
+                // detect from number of params
                 $method = count($params) > 0 ? $method . ' (POST)' : $method;
                 break;
             case 'models':
@@ -521,6 +599,10 @@ class Shapecode
                 // detect models/{modelId}/info from any param
                 $method = count($params) > 0 ? $method . ' (PUT)' : $method;
                 break;
+            case 'orders/{orderId}':
+                // detect orders/{orderId} from status param
+                $method = isset($params['status']) ? $method . ' (PUT)' : $method;
+                break;
         }
 
         $apimethods = $this->getApiMethods();
@@ -536,24 +618,24 @@ class Shapecode
      * Detect filenames in upload parameters,
      * encode loaded files
      *
-     * @param string       $method  The API method to call
-     * @param array  byref $params  The parameters to send along
+     * @param string       $method_template  Templated API method to call
+     * @param array  byref $params           Parameters to send along
      *
      * @return void
      */
-    protected function _encodeFiles($method, &$params)
+    protected function _encodeFiles($method_template, &$params)
     {
         // only check specific parameters
-        $possible_files = array(
+        $possible_files = [
             'models' => 'file',
             'models/{modelId}/files' => 'file'
-        );
+        ];
         // method might have files?
-        if (! in_array($method, array_keys($possible_files))) {
+        if (! in_array($method_template, array_keys($possible_files))) {
             return;
         }
 
-        $possible_files = explode(' ', $possible_files[$method]);
+        $possible_files = explode(' ', $possible_files[$method_template]);
 
         foreach ($params as $key => $value) {
             // check for filenames
@@ -579,12 +661,11 @@ class Shapecode
     /**
      * Builds the complete API endpoint url
      *
-     * @param string $method           The API method to call
-     * @param string $method_template  The API method template to call
+     * @param string $method The API method to call
      *
      * @return string The URL to send the request to
      */
-    protected function _getEndpoint($method, $method_template)
+    protected function _getEndpoint($method)
     {
         $url = sprintf(self::$_endpoint, $method);
         // special trailing slash for this method
@@ -595,17 +676,41 @@ class Shapecode
     }
 
     /**
-     * Calls the API using cURL
+     * Calls the API
      *
-     * @param string          $httpmethod      The HTTP method to use for making the request
-     * @param string          $method          The API method to call
-     * @param string          $method_template The templated API method to call
-     * @param array  optional $params          The parameters to send along
+     * @param string          $httpmethod      HTTP method to use for making the request
+     * @param string          $method          API method to call
+     * @param string          $method_template Templated API method to call
+     * @param array  optional $params          parameters to send along
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApi($httpmethod, $method, $method_template, $params = array())
+    protected function _callApi($httpmethod, $method, $method_template, $params = [])
+    {
+        if ($this->_oauth_token === null
+            && substr($method, 0, 5) !== 'oauth'
+        ) {
+                throw new \Exception('To call this API, the OAuth access token must be set.');
+        }
+        if ($this->_use_curl) {
+            return $this->_callApiCurl($httpmethod, $method, $method_template, $params);
+        }
+        return $this->_callApiNoCurl($httpmethod, $method, $method_template, $params);
+    }
+
+    /**
+     * Calls the API using cURL
+     *
+     * @param string          $httpmethod      HTTP method to use for making the request
+     * @param string          $method          API method to call
+     * @param string          $method_template Templated API method to call
+     * @param array  optional $params          parameters to send along
+     *
+     * @return mixed The API reply, encoded in the set return_format
+     */
+
+    protected function _callApiCurl($httpmethod, $method, $method_template, $params = [])
     {
         if (! function_exists('curl_init')) {
             throw new Exception('To make API requests, the PHP curl extension must be available.');
@@ -613,39 +718,41 @@ class Shapecode
         if (! function_exists('json_encode')) {
             throw new Exception('To make API requests, the PHP json extension must be available.');
         }
-        $url = $this->_getEndpoint($method, $method_template);
-        $ch  = false;
+        $authorization   = null;
+        $url             = $this->_getEndpoint($method);
+        $request_headers = [];
         if ($httpmethod === 'GET') {
-            $url_with_params = $url;
-            if (count($params) > 0) {
-                $url_with_params .= '?' . http_build_query($params);
-            }
             $authorization = $this->_sign($httpmethod, $url, $params);
-            $ch = curl_init($url_with_params);
+            if (json_encode($params) !== '{}'
+                && json_encode($params) !== '[]'
+            ) {
+                $url .= '?' . http_build_query($params);
+            }
+            $ch = curl_init($url);
         } else {
-            if (substr($method_template, 0, 7) === 'oauth1/') {
+            if (substr($method, 0, 7) === 'oauth1/') {
                 $authorization = $this->_sign($httpmethod, $url, $params);
-                $params = http_build_query($params);
+                $params        = http_build_query($params);
             } else {
-                $authorization = $this->_sign($httpmethod, $url, array());
+                $authorization = $this->_sign($httpmethod, $url, []);
                 // load files, if any
-                $this->_encodeFiles($method_template, $params);
+                $this->_encodeFiles($method, $params);
                 $params = json_encode($params);
-                $request_headers[] = 'Content-Length: ' . strlen($params);
-                $request_headers[] = 'Content-Type: application/json';
             }
             $ch = curl_init($url);
             if ($httpmethod === 'POST') {
                 curl_setopt($ch, CURLOPT_POST, 1);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+                $request_headers[] = 'Content-Length: ' . strlen($params);
+                $request_headers[] = 'Content-Type: application/json';
             } else {
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $httpmethod);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
             }
         }
-        $request_headers = array();
+        $request_headers = [];
         if (isset($authorization)) {
-            $request_headers[] = $authorization;
+            $request_headers[] = 'Authorization: ' . $authorization;
             $request_headers[] = 'Expect:';
         }
 
@@ -655,7 +762,7 @@ class Shapecode
         curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CAINFO, dirname(__FILE__) . '/cacert.pem');
+        curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem');
 
         if (isset($this->_timeout)) {
             curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);
@@ -665,30 +772,109 @@ class Shapecode
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $this->_connectionTimeout);
         }
 
-        $reply = curl_exec($ch);
+        $result = curl_exec($ch);
 
         // certificate validation results
         $validation_result = curl_errno($ch);
-        if (in_array(
-                $validation_result,
-                array(
-                    CURLE_SSL_CERTPROBLEM,
-                    CURLE_SSL_CACERT,
-                    CURLE_SSL_CACERT_BADFILE,
-                    CURLE_SSL_CRL_BADFILE,
-                    CURLE_SSL_ISSUER_ERROR
-                )
-            )
-        ) {
-            throw new Exception('Error ' . $validation_result . ' while validating the Shapeways API certificate.');
-        }
+        $this->_validateSslCertificate($validation_result);
 
         $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $reply = $this->_parseApiReply($method_template, $reply);
-        if ($this->_return_format == SHAPECODE_RETURNFORMAT_OBJECT) {
+        $reply      = $this->_parseApiReply($result);
+        if ($this->_return_format === SHAPECODE_RETURNFORMAT_OBJECT) {
             $reply->httpstatus = $httpstatus;
-        } elseif ($this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY) {
+        } elseif ($this->_return_format === SHAPECODE_RETURNFORMAT_ARRAY) {
             $reply['httpstatus'] = $httpstatus;
+        }
+        return $reply;
+    }
+
+    /**
+     * Calls the API without cURL
+     *
+     * @param string          $httpmethod      HTTP method to use for making the request
+     * @param string          $method          API method to call
+     * @param string          $method_template Templated API method to call
+     * @param array  optional $params          parameters to send along
+     *
+     * @return mixed The API reply, encoded in the set return_format
+     */
+
+    protected function _callApiNoCurl($httpmethod, $method, $method_template, $params = [])
+    {
+        if (! function_exists('json_encode')) {
+            throw new Exception('To make API requests, the PHP json extension must be available.');
+        }
+        $authorization = null;
+        $url           = $this->_getEndpoint($method);
+        $hostname      = parse_url($url, PHP_URL_HOST);
+        $request_headers = [];
+        if ($httpmethod === 'GET') {
+            $authorization = $this->_sign($httpmethod, $url, $params);
+            if (json_encode($params) !== '{}'
+                && json_encode($params) !== '[]'
+            ) {
+                $url .= '?' . http_build_query($params);
+            }
+        } else {
+            if (substr($method_template, 0, 7) === 'oauth1/') {
+                $authorization = $this->_sign($httpmethod, $url, $params);
+                $params        = http_build_query($params);
+            } else {
+                $authorization = $this->_sign($httpmethod, $url, []);
+                // load files, if any
+                $this->_encodeFiles($method_template, $params);
+                $params = json_encode($params);
+                if ($httpmethod === 'POST') {
+                    $request_headers[] = 'Content-Length: ' . strlen($params);
+                    $request_headers[] = 'Content-Type: application/json';
+                }
+            }
+        }
+        if (isset($authorization)) {
+            $request_headers[] = 'Authorization: ' . $authorization;
+            $request_headers[] = 'Expect:';
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'method'           => $httpmethod,
+                'protocol_version' => '1.1',
+                'header'           => implode("\r\n", $request_headers),
+                'timeout'          => $this->_timeout / 1000,
+                'content'          => $httpmethod === 'POST' ? $params : null,
+                'ignore_errors'    => true
+            ],
+            'ssl' => [
+                'verify_peer'  => true,
+                'cafile'       => __DIR__ . '/cacert.pem',
+                'verify_depth' => 5,
+                'peer_name'    => $hostname
+            ]
+        ]);
+
+        $reply   = @file_get_contents($url, false, $context);
+        $headers = $http_response_header;
+        $result  = '';
+        foreach ($headers as $header) {
+            $result .= $header . "\r\n";
+        }
+        $result .= "\r\n" . $reply;
+
+        // find HTTP status
+        $httpstatus = '500';
+        $match      = [];
+        if (preg_match('/HTTP\/\d\.\d (\d{3})/', $headers[0], $match)) {
+            $httpstatus = $match[1];
+        }
+
+        $reply      = $this->_parseApiReply($result);
+        switch ($this->_return_format) {
+            case SHAPECODE_RETURNFORMAT_ARRAY:
+                $reply['httpstatus'] = $httpstatus;
+                break;
+            case SHAPECODE_RETURNFORMAT_OBJECT:
+                $reply->httpstatus = $httpstatus;
+                break;
         }
         return $reply;
     }
@@ -696,19 +882,21 @@ class Shapecode
     /**
      * Parses the API reply to encode it in the set return_format
      *
-     * @param string $method The method that has been called
-     * @param string $reply  The actual reply, JSON-encoded or URL-encoded
+     * @param string $reply The actual reply, JSON-encoded or URL-encoded
      *
      * @return array|object The parsed reply
      */
-    protected function _parseApiReply($method, $reply)
+    protected function _parseApiReply($reply)
     {
         // split headers and body
-        $headers = array();
+        $headers = [];
         $reply = explode("\r\n\r\n", $reply, 4);
 
         // check if using proxy
-        if (substr($reply[0], 0, 35) === 'HTTP/1.1 200 Connection Established') {
+        $proxy_strings = [];
+        $proxy_strings[strtolower('HTTP/1.0 200 Connection Established')] = true;
+        $proxy_strings[strtolower('HTTP/1.1 200 Connection Established')] = true;
+        if (array_key_exists(strtolower(substr($reply[0], 0, 35)), $proxy_strings)) {
             array_shift($reply);
         } elseif (count($reply) > 2) {
             $headers = array_shift($reply);
@@ -734,18 +922,17 @@ class Shapecode
             $reply = '';
         }
 
-        $need_array = $this->_return_format == SHAPECODE_RETURNFORMAT_ARRAY;
+        $need_array = $this->_return_format === SHAPECODE_RETURNFORMAT_ARRAY;
         if ($reply == '[]') {
             switch ($this->_return_format) {
                 case SHAPECODE_RETURNFORMAT_ARRAY:
-                    return array();
+                    return [];
                 case SHAPECODE_RETURNFORMAT_JSON:
                     return '{}';
                 case SHAPECODE_RETURNFORMAT_OBJECT:
                     return new stdClass;
             }
         }
-        $parsed = array();
         if (! $parsed = json_decode($reply, $need_array)) {
             if ($reply) {
                 if (stripos($reply, '<' . '?xml version="1.0" encoding="UTF-8"?' . '>') === 0) {
@@ -794,5 +981,3 @@ class Shapecode
         return $parsed;
     }
 }
-
-?>
