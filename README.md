@@ -2,7 +2,7 @@ shapecode-php
 =============
 *A Shapeways API library in PHP.*
 
-Copyright (C) 2014 Jublo Solutions <support@jublo.net>
+Copyright (C) 2014-2015 Jublo Solutions <support@jublo.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ### Requirements
 
-- PHP 5.2.0 or higher
+- PHP 5.5.0 or higher
 - JSON extension
 - OpenSSL extension
 
