@@ -10,6 +10,7 @@ shapecode-php - changelog
 + #13 Orders API
 + #12 Allow for multiple parameters in templated methods
   by replacing preg_match with preg_match_all
++ Update cacert.pem
 
 1.0.0 (2014-02-27)
 Initial release
