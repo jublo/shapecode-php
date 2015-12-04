@@ -7,6 +7,7 @@ shapecode-php - changelog
 + Use default timeout
 + Add composer/installers to allow install path changes
 + Update materials list
++ #13 Orders API
 
 1.0.0 (2014-02-27)
 Initial release

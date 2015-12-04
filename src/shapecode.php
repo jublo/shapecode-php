@@ -250,7 +250,11 @@ class Shapecode
 
                 // Category
                 'categories',
-                'categories/{categoryId}'
+                'categories/{categoryId}',
+
+                // Orders
+                'orders',
+                'orders/{orderId}'
             ),
             'POST' => array(
                 // OAuth1
@@ -266,11 +270,17 @@ class Shapecode
                 'models/{modelId}/photos',
 
                 // Price
-                'price'
+                'price',
+
+                // Orders
+                'orders (POST)'
             ),
             'PUT' => array(
                 // Models
-                'models/{modelId}/info (PUT)'
+                'models/{modelId}/info (PUT)',
+
+                // Orders
+                '/orders/{orderId} (PUT)'
             ),
             'DELETE' => array(
                 'models/{modelId} (DELETE)'
@@ -579,7 +589,8 @@ class Shapecode
         // multi-HTTP method endpoints
         switch ($method) {
             case 'orders/cart':
-                // detect orders/cart from number of params
+            case 'orders':
+                // detect from number of params
                 $method = count($params) > 0 ? $method . ' (POST)' : $method;
                 break;
             case 'models':
@@ -596,6 +607,10 @@ class Shapecode
             case 'models/{modelId}/info':
                 // detect models/{modelId}/info from any param
                 $method = count($params) > 0 ? $method . ' (PUT)' : $method;
+                break;
+            case 'orders/{orderId}':
+                // detect orders/{orderId} from status param
+                $method = isset($params['status']) ? $method . ' (PUT)' : $method;
                 break;
         }
 
