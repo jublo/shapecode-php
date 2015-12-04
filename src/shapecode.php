@@ -358,7 +358,7 @@ class Shapecode
         // replace AA by URL parameters
         $method_template = $method;
         $match           = array();
-        if (preg_match('/[A-Z_]{2,}/', $method, $match)) {
+        if (preg_match_all('/[A-Z_]{2,}/', $method, $match)) {
             foreach ($match as $param) {
                 $param_l = strtolower($param);
                 if (substr($param_l, -2) === 'id') {
