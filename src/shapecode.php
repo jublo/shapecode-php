@@ -349,8 +349,7 @@ class Shapecode
         $method_template = $method;
         $match           = [];
         if (preg_match_all('/[A-Z_]{2,}/', $method, $match)) {
-            foreach ($match as $param) {
-                $param = $param[0];
+            foreach ($match[0] as $param) {
                 $param_l = strtolower($param);
                 if (substr($param_l, -2) === 'id') {
                     $param_l = substr($param_l, 0, -2) . 'Id';
