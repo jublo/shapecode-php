@@ -4,7 +4,7 @@
  * A Shapeways API library in PHP.
  *
  * @package   shapecode
- * @version   1.1.0
+ * @version   1.1.1
  * @author    Jublo Solutions <support@jublo.net>
  * @copyright 2014-2015 Jublo Solutions <support@jublo.net>
  * @license   http://opensource.org/licenses/LGPL-3.0 GNU Lesser General Public License 3.0
@@ -84,7 +84,7 @@ class Shapecode
     /**
      * The current Shapecode version
      */
-    protected $_version = '1.1.0';
+    protected $_version = '1.1.1';
 
     /**
      * Auto-detect cURL absence
@@ -349,8 +349,7 @@ class Shapecode
         $method_template = $method;
         $match           = [];
         if (preg_match_all('/[A-Z_]{2,}/', $method, $match)) {
-            foreach ($match as $param) {
-                $param = $param[0];
+            foreach ($match[0] as $param) {
                 $param_l = strtolower($param);
                 if (substr($param_l, -2) === 'id') {
                     $param_l = substr($param_l, 0, -2) . 'Id';
