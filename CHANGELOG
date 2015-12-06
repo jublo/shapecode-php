@@ -1,6 +1,9 @@
 shapecode-php - changelog
 =========================
 
+1.1.1 (2015-12-06)
++ Fix multiple inline parameter detection
+
 1.1.0 (2015-12-04)
 + Better Proxy HTTP status detection
 + Don't require cURL, allow stream connections too
