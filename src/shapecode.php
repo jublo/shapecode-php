@@ -4,9 +4,9 @@
  * A Shapeways API library in PHP.
  *
  * @package   shapecode
- * @version   1.1.1
+ * @version   1.1.2
  * @author    Jublo Solutions <support@jublo.net>
- * @copyright 2014-2015 Jublo Solutions <support@jublo.net>
+ * @copyright 2014-2016 Jublo Solutions <support@jublo.net>
  * @license   http://opensource.org/licenses/LGPL-3.0 GNU Lesser General Public License 3.0
  * @link      https://github.com/jublonet/shapecode-php
  */
@@ -84,7 +84,7 @@ class Shapecode
     /**
      * The current Shapecode version
      */
-    protected $_version = '1.1.1';
+    protected $_version = '1.1.2';
 
     /**
      * Auto-detect cURL absence
@@ -273,7 +273,8 @@ class Shapecode
                 'price',
 
                 // Orders
-                'orders (POST)'
+                'orders (POST)',
+                'orders/{orderId}/reprint'
             ],
             'PUT' => [
                 // Models
