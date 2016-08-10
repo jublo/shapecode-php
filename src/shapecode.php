@@ -273,7 +273,8 @@ class Shapecode
                 'price',
 
                 // Orders
-                'orders (POST)'
+                'orders (POST)',
+                'orders/{orderId}/reprint'
             ],
             'PUT' => [
                 // Models
